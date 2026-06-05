@@ -62,7 +62,7 @@
         .view-control-box label { display: inline; font-size: 0.9rem; color: #fff; cursor: pointer; font-weight: bold; }
         .view-control-box span { font-size: 0.8rem; color: #888; margin-left: 5px; }
 
-        /* 👑 ボトムシート（引き出し）のスタイル */
+        /*  ボトムシート（引き出し）のスタイル */
         .bottom-sheet {
             position: fixed;
             bottom: 0;
@@ -146,16 +146,16 @@
         <div class="view-control-row">
             <span style="font-size: 0.9rem; font-weight: bold; color: #aaa; margin-right: 10px;">表示モード:</span>
             <input type="radio" name="viewMode" id="modeLayered" value="layered" checked>
-            <label for="modeLayered" style="margin-right: 20px;">重ねて比較 (ツラ・隙間重視)</label>
+            <label for="modeLayered" style="margin-right: 20px;">重ねて表示 </label>
             
             <input type="radio" name="viewMode" id="modeSide" value="side">
-            <label for="modeSide">左右に並べて比較 (前・後 / 足回り連動)</label>
+            <label for="modeSide">左右に並べて表示 </label>
         </div>
         <div class="view-control-row">
             <span style="font-size: 0.9rem; font-weight: bold; color: #aaa; margin-right: 10px;">補助線表示:</span>
             <input type="checkbox" id="showHubLine" checked>
             <label for="showHubLine">ハブ基準線 (点線) を表示する</label>
-            <span>(ツラ単体の美しさをチェックしたい時はオフに)</span>
+            <span>(点線が邪魔で見辛い場合にオフにしてください)</span>
         </div>
     </div>
 
@@ -213,7 +213,7 @@
 </div>
 
 <script>
-    // 👑 ボトムシートを開閉する機能
+    //  ボトムシートを開閉する機能
     function toggleSheet() {
         const sheet = document.getElementById('bottomSheet');
         const text = document.getElementById('toggleText');
