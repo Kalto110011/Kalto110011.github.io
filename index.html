@@ -160,7 +160,7 @@
 
     <div class="dropdown-box calc-opt">
         <div class="dropdown-trigger" onclick="toggleDropdown('calcDropdown', event)">
-            <span>⚙️ 計算・測定オプション</span>
+            <span> 計算・測定オプション</span>
             <span class="arrow">▼</span>
         </div>
         <div id="calcDropdown" class="dropdown-content" onclick="event.stopPropagation()">
@@ -181,7 +181,7 @@
 
     <div class="dropdown-box view-opt">
         <div class="dropdown-trigger" onclick="toggleDropdown('viewDropdown', event)">
-            <span>👁️ 表示・補助線モード</span>
+            <span> 表示オプション</span>
             <span class="arrow">▼</span>
         </div>
         <div id="viewDropdown" class="dropdown-content" onclick="event.stopPropagation()">
@@ -418,27 +418,25 @@
 
         updateViz('curAssembly', c.j, c.i, c.s, c.a, c.tw, c.tr, c.ti, false, !modeLayered, showHubLine);
         updateViz('newAssembly', n.j, n.i, n.s, n.a, n.tw, n.tr, n.ti, true, !modeLayered, showHubLine);
-
-        // 【修正】引っ張り判定を「J数(インチ→mm換算) > タイヤ幅(mm)」の純粋ロジックに変更
-        const isCurStretched = (c.j * 25.4) > c.tw;
-        const isNewStretched = (n.j * 25.4) > n.tw;
+        
+        const curActualW = (c.j + 1) * 25.4;
+        const newActualW = (n.j + 1) * 25.4;
         const isStretched = isCurStretched || isNewStretched;
 
-        // 【修正】どちらの仕様も標準/太めタイヤに戻ったら自動でタイヤ基準へスイッチするよう改善
-        if (isInputChange) {
-            if (isStretched) {
-                if (!document.getElementById('baseRim').checked) {
-                    document.getElementById('baseRim').checked = true;
-                    showToast("⚠️ 引っ張りタイヤ検知：自動で リム基準 に切り替えました");
-                }
-            } else {
-                if (!document.getElementById('baseTire').checked) {
-                    document.getElementById('baseTire').checked = true;
-                    showToast("💡 標準タイヤ検知：自動で タイヤ基準 に切り替えました");
-                }
-            }
+if (isInputChange) {
+    if (isStretched) {
+        if (!document.getElementById('baseRim').checked) {
+            document.getElementById('baseRim').checked = true;
+            showToast("引っ張りタイヤ検知：自動で リム基準 に切り替えました");
         }
-
+    } else {
+        
+        if (!document.getElementById('baseTire').checked) {
+            document.getElementById('baseTire').checked = true;
+            showToast("標準タイヤ検知：自動で タイヤ基準 に切り替えました");
+        }
+    }
+}
         const calcBase = document.querySelector('input[name="calcBase"]:checked').value;
         const baseName = calcBase === 'rim' ? 'リム' : 'タイヤ';
 
