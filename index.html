@@ -1,24 +1,21 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-BQKHCPRJNG"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-BQKHCPRJNG');
-</script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-BQKHCPRJNG');
+    </script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wheel Fitment Sim　| ホイールオフセット・キャンバーの変更によるホイール出幅自動計算ツール </title>
+    <title>Wheel Fitment Sim | ホイール出幅自動計算ツール</title>
     <style>
         :root {
-            /* ▽▽【重要】ここにお好きな背景写真のURLを入れてください ▽▽ */
             --bg-image: url('bg.png'); 
-            
             --bg-color: #0f0f0f;
             --card-bg: rgba(26, 26, 26, 0.93);
             --text-color: #e0e0e0;
@@ -69,11 +66,12 @@
         input { width: 100%; padding: 8px; background: #111; border: 1px solid #444; border-radius: 4px; color: #fff; font-size: 1rem; box-sizing: border-box; }
         input:focus { border-color: var(--accent-color); outline: none; }
         
+        /* 描画エリア & ズームボタン */
         .visual-area { position: relative; background: #ffffff; padding: 0; border-radius: 8px; margin-bottom: 25px; height: 350px; border: 1px solid #ccc; overflow: hidden; }
         .viz-label { position: absolute; top: 10px; left: 0; width: 100%; font-size: 0.8rem; font-weight: bold; color: #333; text-align: center; z-index: 5; pointer-events: none; }
         .pane { height: 100%; box-sizing: border-box; position: relative; }
         .pane-label { position: absolute; top: 15px; width: 100%; text-align: center; font-size: 0.75rem; font-weight: bold; z-index: 5; pointer-events: none; }
-        .wheel-assembly { position: absolute; transition: all 0.2s ease-out; mix-blend-mode: multiply; }
+        .wheel-assembly { position: absolute; transition: transform 0.1s ease-out, left 0.2s ease-out, top 0.2s ease-out; mix-blend-mode: multiply; }
         
         .visual-area.mode-layered { display: block; }
         .visual-area.mode-layered .pane { position: absolute; top: 0; left: 0; width: 100%; }
@@ -86,37 +84,28 @@
         .visual-area.mode-side .pane-label { display: block; } 
         .visual-area.mode-side .viz-label { display: none; }
 
-        .setup-option { background: rgba(34, 34, 34, 0.85); padding: 12px 15px; border-radius: 8px; border: 1px solid #444; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
-        .setup-option input[type="checkbox"] { width: auto; cursor: pointer; transform: scale(1.2); margin: 0; }
-        .setup-option label { display: inline; font-size: 0.9rem; color: #fff; cursor: pointer; font-weight: bold; }
-        .setup-option span { font-size: 0.8rem; color: #888; margin-left: 5px; }
+        .zoom-controls { position: absolute; bottom: 15px; right: 15px; display: flex; gap: 6px; z-index: 20; }
+        .zoom-controls button { width: 36px; height: 36px; background: rgba(0, 0, 0, 0.75); border: 1px solid #555; color: #fff; border-radius: 6px; font-size: 1.1rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; user-select: none; }
+        .zoom-controls button:active { background: var(--accent-color); border-color: var(--accent-color); }
 
+        /* トースト通知 */
+        #toast { visibility: hidden; min-width: 280px; background-color: rgba(30, 30, 30, 0.95); color: #fff; text-align: center; border-radius: 8px; padding: 12px 16px; position: fixed; z-index: 2000; top: 20px; left: 50%; transform: translateX(-50%); font-size: 0.85rem; font-weight: bold; transition: opacity 0.4s, transform 0.4s; opacity: 0; border: 1px solid var(--accent-color); box-shadow: 0 4px 15px rgba(0,0,0,0.5); pointer-events: none; }
+        #toast.show { visibility: visible; opacity: 1; transform: translate(-50%, 10px); }
+
+        /* オプション・コントロールボックス */
         .view-control-box { background: rgba(34, 34, 34, 0.85); padding: 15px; border-radius: 8px; border: 1px solid #444; border-left: 4px solid var(--compare-color); margin-bottom: 20px; }
-        .view-control-row { display: flex; align-items: center; gap: 10px; }
+        .calc-option-box { background: rgba(34, 34, 34, 0.85); padding: 15px; border-radius: 8px; border: 1px solid #444; border-left: 4px solid var(--accent-color); margin-bottom: 20px; }
+        
+        .view-control-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .view-control-row:not(:last-child) { margin-bottom: 12px; border-bottom: 1px solid #333; padding-bottom: 12px; }
-        .view-control-box input[type="radio"], .view-control-box input[type="checkbox"] { width: auto; cursor: pointer; transform: scale(1.2); margin: 0; }
-        .view-control-box label { display: inline; font-size: 0.9rem; color: #fff; cursor: pointer; font-weight: bold; }
-        .view-control-box span { font-size: 0.8rem; color: #888; margin-left: 5px; }
+        .view-control-box input[type="radio"], .view-control-box input[type="checkbox"],
+        .calc-option-box input[type="radio"], .calc-option-box input[type="checkbox"] { width: auto; cursor: pointer; transform: scale(1.2); margin: 0; }
+        .view-control-box label, .calc-option-box label { display: inline; font-size: 0.9rem; color: #fff; cursor: pointer; font-weight: bold; }
+        .view-control-box span, .calc-option-box span { font-size: 0.8rem; color: #888; margin-left: 5px; }
 
-        .result-panel {
-            background: rgba(17, 17, 17, 0.95);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-            backdrop-filter: blur(5px);
-            z-index: 1000;
-            box-sizing: border-box;
-            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-        }
-        .sheet-toggle {
-            height: 50px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            color: #fff;
-            font-weight: bold;
-            font-size: 1rem;
-            background: #1a1a1a;
-        }
+        /* リザルトパネル */
+        .result-panel { background: rgba(17, 17, 17, 0.95); box-shadow: 0 10px 30px rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 1000; box-sizing: border-box; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        .sheet-toggle { height: 50px; display: flex; justify-content: center; align-items: center; cursor: pointer; color: #fff; font-weight: bold; font-size: 1rem; background: #1a1a1a; }
         .result-item { display: flex; flex-direction: column; padding: 12px 0; border-bottom: 1px solid #333; font-size: 0.95rem; }
         .result-item:last-child { border-bottom: none; }
         .result-title { display: flex; justify-content: space-between; margin-bottom: 5px; color: #ccc;}
@@ -125,61 +114,60 @@
 
         @media (max-width: 767px) {
             .columns { flex-direction: column; }
-            .result-panel {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                width: 100%;
-                border-top: 3px solid var(--accent-color);
-                border-radius: 20px 20px 0 0;
-                transform: translateY(calc(100% - 50px));
-            }
+            .result-panel { position: fixed; bottom: 0; left: 0; width: 100%; border-top: 3px solid var(--accent-color); border-radius: 20px 20px 0 0; transform: translateY(calc(100% - 50px)); }
             .result-panel.open { transform: translateY(0); }
             .sheet-toggle { border-radius: 20px 20px 0 0; position: relative; }
-            .sheet-toggle::before {
-                content: ''; position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 40px; height: 5px; background: #666; border-radius: 3px;
-            }
+            .sheet-toggle::before { content: ''; position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 40px; height: 5px; background: #666; border-radius: 3px; }
             .sheet-content { padding: 10px 25px 35px 25px; }
         }
 
         @media (min-width: 768px) {
-            .result-panel {
-                position: fixed;
-                top: 25px;
-                right: 25px;
-                width: 340px;
-                border: 1px solid var(--border-color);
-                border-top: 4px solid var(--accent-color);
-                border-radius: 8px;
-                overflow: hidden;
-            }
+            .result-panel { position: fixed; top: 25px; right: 25px; width: 340px; border: 1px solid var(--border-color); border-top: 4px solid var(--accent-color); border-radius: 8px; overflow: hidden; }
             .sheet-toggle { height: 45px; font-size: 0.95rem; }
-            .sheet-content {
-                padding: 5px 20px 15px 20px;
-                transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
-                max-height: 400px;
-                opacity: 1;
-            }
+            .sheet-content { padding: 5px 20px 15px 20px; transition: max-height 0.3s ease-out, opacity 0.3s ease-out; max-height: 400px; opacity: 1; }
             .result-panel.pc-closed .sheet-content { max-height: 0; padding-top: 0; padding-bottom: 0; opacity: 0; pointer-events: none; }
         }
     </style>
 </head>
 <body>
 
+<div id="toast"></div>
+
 <div class="container">
     <h1>Wheel Fitment Sim</h1>
 
     <div id="visualArea" class="visual-area mode-layered">
         <div class="viz-label">現在 (青) ⇔ 変更案 (赤)</div>
-        
         <div id="curPane" class="pane">
             <div class="pane-label" style="color: #2980b9;">【前】現在の仕様</div>
             <div id="curAssembly" class="wheel-assembly" style="z-index: 2;"></div>
         </div>
-        
         <div id="newPane" class="pane">
             <div class="pane-label" style="color: #c0392b;">【後】変更案</div>
             <div id="newAssembly" class="wheel-assembly" style="z-index: 3;"></div>
+        </div>
+        
+        <div class="zoom-controls">
+            <button onclick="changeZoom(0.25)">＋</button>
+            <button onclick="resetZoom()">・</button>
+            <button onclick="changeZoom(-0.25)">ー</button>
+        </div>
+    </div>
+
+    <div class="calc-option-box">
+        <div style="font-weight: bold; margin-bottom: 10px; color: #fff;"> 計算・測定オプション</div>
+        <div class="view-control-row">
+            <input type="checkbox" id="isStrut">
+            <label for="isStrut">ストラット式サスペンション</label>
+            <span>(アッパーマウント側でキャンバーを調整する場合はチェック)</span>
+        </div>
+        <div class="view-control-row" style="border-bottom: none; padding-bottom: 0;">
+            <span style="font-size: 0.9rem; font-weight: bold; color: #aaa; margin-right: 10px;">基準位置:</span>
+            <input type="radio" name="calcBase" id="baseRim" value="rim" checked>
+            <label for="baseRim" style="margin-right: 20px;">リム基準 (ホイール最外側)</label>
+            
+            <input type="radio" name="calcBase" id="baseTire" value="tire">
+            <label for="baseTire">タイヤ基準 (ショルダー最外側)</label>
         </div>
     </div>
 
@@ -188,21 +176,19 @@
             <span style="font-size: 0.9rem; font-weight: bold; color: #aaa; margin-right: 10px;">表示モード:</span>
             <input type="radio" name="viewMode" id="modeLayered" value="layered" checked>
             <label for="modeLayered" style="margin-right: 20px;">重ねて表示 </label>
-            
             <input type="radio" name="viewMode" id="modeSide" value="side">
             <label for="modeSide">左右に並べて表示 </label>
         </div>
-        <div class="view-control-row">
+        <div class="view-control-row" style="border-bottom: none; padding-bottom: 0;">
             <span style="font-size: 0.9rem; font-weight: bold; color: #aaa; margin-right: 10px;">補助線表示:</span>
             <input type="checkbox" id="showHubLine" checked>
             <label for="showHubLine">ハブ基準線 (点線) を表示する</label>
-            <span>(実測時の「ハブ面」の目安)</span>
         </div>
     </div>
 
     <div class="columns">
         <div class="column current-spec">
-            <div class="column-title" style="color: var(--compare-color);">🔹 現在の仕様</div>
+            <div class="column-title" style="color: var(--compare-color);"> 現在の仕様</div>
             <div class="input-group"><label>J数</label><input type="text" id="curJ" value="8.5"></div>
             <div class="input-group"><label>インセット</label><input type="text" id="curInset" value="45"></div>
             <div class="input-group"><label>スペーサー</label><input type="text" id="curSpacer" value="0"></div>
@@ -218,7 +204,7 @@
         </div>
         
         <div class="column new-spec">
-            <div class="column-title" style="color: var(--new-spec-color);">🔸 変更案</div>
+            <div class="column-title" style="color: var(--new-spec-color);"> 変更案</div>
             <div class="input-group"><label>J数</label><input type="text" id="newJ" value="10.0"></div>
             <div class="input-group"><label>インセット</label><input type="text" id="newInset" value="20"></div>
             <div class="input-group"><label>スペーサー</label><input type="text" id="newSpacer" value="0"></div>
@@ -233,13 +219,6 @@
             </div>
         </div>
     </div>
-
-    <div class="setup-option">
-        <input type="checkbox" id="isStrut">
-        <label for="isStrut">ストラット式サスペンション</label>
-        <span>(アッパーマウント側でキャンバーを調整する場合にチェック)</span>
-    </div>
-
 </div>
 
 <div id="bottomSheet" class="result-panel">
@@ -248,12 +227,12 @@
     </div>
     <div class="sheet-content">
         <div class="result-item">
-            <div class="result-title"><span>アウター側（ツラ出幅）</span><span class="diff-val" id="diffOuter">--</span></div>
-            <div class="abs-val" id="absOuter">ハブ面〜リム上端の距離: -- mm</div>
+            <div class="result-title"><span id="textOuterTitle">アウター側</span><span class="diff-val" id="diffOuter">--</span></div>
+            <div class="abs-val" id="absOuter">ハブ面〜最外側の距離: -- mm</div>
         </div>
         <div class="result-item">
-            <div class="result-title"><span>インナー側（サス等への接近）</span><span class="diff-val" id="diffInner">--</span></div>
-            <div class="abs-val" id="absInner">ハブ面〜リム内側上端の距離: -- mm</div>
+            <div class="result-title"><span id="textInnerTitle">インナー側</span><span class="diff-val" id="diffInner">--</span></div>
+            <div class="abs-val" id="absInner">ハブ面〜最内側の距離: -- mm</div>
         </div>
         <div class="result-item">
             <div class="result-title"><span>車高の変化（タイヤ半径差）</span><span class="diff-val" id="diffHeight">--</span></div>
@@ -262,6 +241,10 @@
 </div>
 
 <script>
+    let lastStretchState = null;
+    let zoomLevel = 1.0;
+    let toastTimeout = null;
+
     window.addEventListener('DOMContentLoaded', setupToggleText);
     window.addEventListener('resize', setupToggleText);
 
@@ -290,6 +273,29 @@
         }
     }
 
+    function showToast(message) {
+        const toast = document.getElementById("toast");
+        toast.innerText = message;
+        toast.classList.add("show");
+        
+        if (toastTimeout) clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => { 
+            toast.classList.remove("show"); 
+        }, 3000);
+    }
+
+    // ズーム変更関数
+    function changeZoom(amount) {
+        zoomLevel = Math.max(0.5, Math.min(2.5, zoomLevel + amount));
+        compare();
+    }
+
+    // ズームリセット関数
+    function resetZoom() {
+        zoomLevel = 1.0;
+        compare();
+    }
+
     function getNum(id) {
         const val = document.getElementById(id).value;
         const num = parseFloat(val);
@@ -307,8 +313,6 @@
         if(dia === 0) return;
 
         const scale = 0.4; 
-        
-        // 【修正点】フランジの厚み分(+1インチ)を含めた「実際のリム総幅」を描画ベースにする
         const actualJWidth = (j + 1) * 25.4; 
         const wwPx = actualJWidth * scale;       
         const twPx = tWidth * scale;           
@@ -317,23 +321,12 @@
         const sideHPx = (totalHPx - wheelHPx) / 2; 
 
         const maxWPx = Math.max(wwPx, twPx);
-
         const tireX1 = (maxWPx - twPx) / 2;
         const tireX2 = tireX1 + twPx;
         const wheelX1 = (maxWPx - wwPx) / 2;
         const wheelX2 = wheelX1 + wwPx;
 
-        const polygonPath = `polygon(
-            ${tireX1}px 0px, 
-            ${tireX2}px 0px, 
-            ${wheelX2}px ${sideHPx}px, 
-            ${wheelX2}px ${sideHPx + wheelHPx}px, 
-            ${tireX2}px ${totalHPx}px, 
-            ${tireX1}px ${totalHPx}px, 
-            ${wheelX1}px ${sideHPx + wheelHPx}px, 
-            ${wheelX1}px ${sideHPx}px
-        )`;
-
+        const polygonPath = `polygon(${tireX1}px 0px, ${tireX2}px 0px, ${wheelX2}px ${sideHPx}px, ${wheelX2}px ${sideHPx + wheelHPx}px, ${tireX2}px ${totalHPx}px, ${tireX1}px ${totalHPx}px, ${wheelX1}px ${sideHPx + wheelHPx}px, ${wheelX1}px ${sideHPx})`;
         const pointsStr = `${tireX1},0 ${tireX2},0 ${wheelX2},${sideHPx} ${wheelX2},${sideHPx + wheelHPx} ${tireX2},${totalHPx} ${tireX1},${totalHPx} ${wheelX1},${sideHPx + wheelHPx} ${wheelX1},${sideHPx}`;
 
         const color = isNew ? 'var(--new-spec-color)' : 'var(--compare-color)';
@@ -348,25 +341,15 @@
         assembly.style.transformOrigin = `${hubX}px ${centerY}px`;
         assembly.style.left = `calc(50% - ${hubX}px)`;
         assembly.style.top = `calc(50% - ${centerY}px)`; 
-        assembly.style.transform = `rotate(-${camber}deg)`;
+        
+        // キャンバー回転にズーム倍率(scale)を掛け合わせる
+        assembly.style.transform = `rotate(-${camber}deg) scale(${zoomLevel})`;
 
         assembly.innerHTML = `
-            <div style="
-                position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-                clip-path: ${polygonPath};
-                background: linear-gradient(to bottom, 
-                    ${gradTop} 0px, 
-                    ${gradTop} ${sideHPx}px, 
-                    ${bgColor} ${sideHPx}px, 
-                    ${bgColor} ${sideHPx + wheelHPx}px, 
-                    ${gradTop} ${sideHPx + wheelHPx}px, 
-                    ${gradTop} 100%);
-            "></div>
-            
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; clip-path: ${polygonPath}; background: linear-gradient(to bottom, ${gradTop} 0px, ${gradTop} ${sideHPx}px, ${bgColor} ${sideHPx}px, ${bgColor} ${sideHPx + wheelHPx}px, ${gradTop} ${sideHPx + wheelHPx}px, ${gradTop} 100%);"></div>
             <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: visible; z-index: 10;">
                 <polygon points="${pointsStr}" fill="none" stroke="${color}" stroke-width="0.5" />
                 <line x1="${hubX}" y1="${centerY - 220}" x2="${hubX}" y2="${centerY + 220}" stroke="${color}" stroke-width="1.5" stroke-dasharray="4 4" style="display: ${showLine ? 'block' : 'none'};"/>
-                
                 <g style="display: ${showKnuckle ? 'block' : 'none'};">
                     <line x1="${hubX}" y1="${centerY - 30}" x2="${hubX}" y2="${centerY + 30}" stroke="${color}" stroke-width="6" stroke-linecap="round"/>
                     <line x1="${hubX}" y1="${centerY}" x2="${hubX - 20}" y2="${centerY}" stroke="${color}" stroke-width="5" stroke-linecap="round"/>
@@ -383,11 +366,11 @@
     function compare() {
         const c = { j: getNum('curJ'), i: getNum('curInset'), s: getNum('curSpacer'), a: getNum('curCamber'), tw: getNum('curTWidth'), tr: getNum('curTRatio'), ti: getNum('curTInch') };
         const n = { j: getNum('newJ'), i: getNum('newInset'), s: getNum('newSpacer'), a: getNum('newCamber'), tw: getNum('newTWidth'), tr: getNum('newTRatio'), ti: getNum('newTInch') };
+        
         const isStrut = document.getElementById('isStrut').checked;
         const showHubLine = document.getElementById('showHubLine').checked;
         const modeLayered = document.getElementById('modeLayered').checked;
         const visualArea = document.getElementById('visualArea');
-
         visualArea.className = modeLayered ? 'visual-area mode-layered' : 'visual-area mode-side';
 
         const curDia = calcDia(c.tw, c.tr, c.ti);
@@ -396,52 +379,75 @@
         updateViz('curAssembly', c.j, c.i, c.s, c.a, c.tw, c.tr, c.ti, false, !modeLayered, showHubLine);
         updateViz('newAssembly', n.j, n.i, n.s, n.a, n.tw, n.tr, n.ti, true, !modeLayered, showHubLine);
 
-        // 【修正点】フランジを含めた実リム幅(mm)
         const curActualW = (c.j + 1) * 25.4;
         const newActualW = (n.j + 1) * 25.4;
 
-        // アウター側：ハブ面からリムフチまでの水平出幅（キャンバー考慮前）
+        // 引っ張りタイヤの自動検知ロジック
+        const isStretched = curActualW > c.tw || newActualW > n.tw;
+
+        // 状態が変化した瞬間だけラジオボタンの自動切り替え＆トースト表示
+        if (isStretched !== lastStretchState) {
+            if (isStretched) {
+                document.getElementById('baseRim').checked = true;
+                showToast(" 引っ張りタイヤ検知：自動で リム基準 に切り替えました");
+            } else {
+                document.getElementById('baseTire').checked = true;
+                showToast(" 標準タイヤ検知：自動で タイヤ基準 に切り替えました");
+            }
+            lastStretchState = isStretched;
+        }
+
+        const calcBase = document.querySelector('input[name="calcBase"]:checked').value;
+        const baseName = calcBase === 'rim' ? 'リム' : 'タイヤ';
+
         const curLipOutHub = (curActualW / 2) - c.i + c.s;
         const newLipOutHub = (newActualW / 2) - n.i + n.s;
-
-        // リム先端の高さ（キャンバー倒れ込み計算用）
-        const curRimRadius = (c.ti * 25.4 / 2) + 12.7;
-        const newRimRadius = (n.ti * 25.4 / 2) + 12.7;
-
-        // アウター側：キャンバーを加味した最終的な出幅（上端）
-        const curFinalOut = curLipOutHub - (curRimRadius * Math.sin(c.a * Math.PI / 180));
-        const newFinalOut = newLipOutHub - (newRimRadius * Math.sin(n.a * Math.PI / 180));
-        const diffOut = newFinalOut - curFinalOut;
-
-        // インナー側：ハブ面からリム内側フチまでの水平出幅
         const curLipInHub = (curActualW / 2) + c.i - c.s;
         const newLipInHub = (newActualW / 2) + n.i - n.s;
 
-        const curCamberInFactor = isStrut ? 0 : (curRimRadius * Math.sin(c.a * Math.PI / 180));
-        const newCamberInFactor = isStrut ? 0 : (newRimRadius * Math.sin(n.a * Math.PI / 180));
+        const curTireOutHub = (c.tw / 2) - c.i + c.s;
+        const newTireOutHub = (n.tw / 2) - n.i + n.s;
+        const curTireInHub = (c.tw / 2) + c.i - c.s;
+        const newTireInHub = (n.tw / 2) + n.i - n.s;
 
-        // インナー側：キャンバーを加味した最終的な入り込み（上端）
-        const curFinalIn = curLipInHub + curCamberInFactor;
-        const newFinalIn = newLipInHub + newCamberInFactor;
+        const curRimRadius = (c.ti * 25.4 / 2) + 12.7;
+        const newRimRadius = (n.ti * 25.4 / 2) + 12.7;
+        const curTireMidRadius = (c.ti * 25.4 / 2) + ((c.tw * c.tr / 100) / 2);
+        const newTireMidRadius = (n.ti * 25.4 / 2) + ((n.tw * n.tr / 100) / 2);
+
+        let curFinalOut, newFinalOut, curFinalIn, newFinalIn;
+
+        if (calcBase === 'rim') {
+            curFinalOut = curLipOutHub - (curRimRadius * Math.sin(c.a * Math.PI / 180));
+            newFinalOut = newLipOutHub - (newRimRadius * Math.sin(n.a * Math.PI / 180));
+            curFinalIn = curLipInHub + (isStrut ? 0 : (curRimRadius * Math.sin(c.a * Math.PI / 180)));
+            newFinalIn = newLipInHub + (isStrut ? 0 : (newRimRadius * Math.sin(n.a * Math.PI / 180)));
+        } else {
+            curFinalOut = curTireOutHub - (curTireMidRadius * Math.sin(c.a * Math.PI / 180));
+            newFinalOut = newTireOutHub - (newTireMidRadius * Math.sin(n.a * Math.PI / 180));
+            curFinalIn = curTireInHub + (isStrut ? 0 : (curTireMidRadius * Math.sin(c.a * Math.PI / 180)));
+            newFinalIn = newTireInHub + (isStrut ? 0 : (newTireMidRadius * Math.sin(n.a * Math.PI / 180)));
+        }
+
+        const diffOut = newFinalOut - curFinalOut;
         const diffIn = newFinalIn - curFinalIn;
-
         const diffHeight = (newDia - curDia) / 2;
 
-        // アウター結果出力
+        document.getElementById('textOuterTitle').innerText = `アウター側（${baseName}基準）`;
+        document.getElementById('textInnerTitle').innerText = `インナー側（${baseName}基準）`;
+
         const outEl = document.getElementById('diffOuter');
         const absOutEl = document.getElementById('absOuter');
         outEl.innerText = diffOut >= 0 ? `+ ${diffOut.toFixed(1)} mm 外へ` : `- ${Math.abs(diffOut).toFixed(1)} mm 内へ`;
         outEl.style.color = diffOut >= 0 ? 'var(--accent-color)' : 'var(--compare-color)';
-        absOutEl.innerText = `変更後のハブ面からの距離(実測用): ${newFinalOut.toFixed(1)} mm`;
+        absOutEl.innerText = `ハブ面〜${baseName}最外側の距離: ${newFinalOut.toFixed(1)} mm`;
 
-        // インナー結果出力
         const inEl = document.getElementById('diffInner');
         const absInEl = document.getElementById('absInner');
         inEl.innerText = diffIn >= 0 ? `+ ${diffIn.toFixed(1)} mm 接近` : `- ${Math.abs(diffIn).toFixed(1)} mm 余裕増加`;
         inEl.style.color = diffIn >= 0 ? '#ffcc00' : '#00ff7f';
-        absInEl.innerText = `変更後のハブ面から奥への距離: ${newFinalIn.toFixed(1)} mm`;
+        absInEl.innerText = `ハブ面〜${baseName}最内側の距離: ${newFinalIn.toFixed(1)} mm`;
 
-        // 車高結果出力
         const heightEl = document.getElementById('diffHeight');
         if (diffHeight === 0) {
             heightEl.innerText = `± 0.0 mm`;
@@ -459,6 +465,7 @@
     ids.forEach(id => document.getElementById(id).addEventListener('input', compare));
     document.getElementById('isStrut').addEventListener('change', compare);
     document.getElementById('showHubLine').addEventListener('change', compare);
+    document.getElementsByName('calcBase').forEach(radio => radio.addEventListener('change', compare));
     document.getElementsByName('viewMode').forEach(radio => radio.addEventListener('change', compare));
     
     compare();
