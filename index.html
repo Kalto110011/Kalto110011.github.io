@@ -91,16 +91,22 @@
         #toast { visibility: hidden; min-width: 280px; background-color: rgba(30, 30, 30, 0.95); color: #fff; text-align: center; border-radius: 8px; padding: 12px 16px; position: fixed; z-index: 2000; top: 20px; left: 50%; transform: translateX(-50%); font-size: 0.85rem; font-weight: bold; transition: opacity 0.4s, transform 0.4s; opacity: 0; border: 1px solid var(--accent-color); box-shadow: 0 4px 15px rgba(0,0,0,0.5); pointer-events: none; }
         #toast.show { visibility: visible; opacity: 1; transform: translate(-50%, 10px); }
 
-        /* オプション・コントロールボックス */
-        .view-control-box { background: rgba(34, 34, 34, 0.85); padding: 15px; border-radius: 8px; border: 1px solid #444; border-left: 4px solid var(--compare-color); margin-bottom: 20px; }
-        .calc-option-box { background: rgba(34, 34, 34, 0.85); padding: 15px; border-radius: 8px; border: 1px solid #444; border-left: 4px solid var(--accent-color); margin-bottom: 20px; }
+        /* 内蔵型プルダウン（カスタムドロップダウン）スタイル */
+        .dropdown-box { position: relative; margin-bottom: 20px; width: 100%; }
+        .dropdown-trigger { background: rgba(34, 34, 34, 0.85); border: 1px solid #444; padding: 12px 15px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 0.95rem; color: #fff; user-select: none; box-sizing: border-box; }
+        .dropdown-trigger:hover { border-color: #666; }
+        .dropdown-box.calc-opt .dropdown-trigger { border-left: 4px solid var(--accent-color); }
+        .dropdown-box.view-opt .dropdown-trigger { border-left: 4px solid var(--compare-color); }
         
-        .view-control-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-        .view-control-row:not(:last-child) { margin-bottom: 12px; border-bottom: 1px solid #333; padding-bottom: 12px; }
-        .view-control-box input[type="radio"], .view-control-box input[type="checkbox"],
-        .calc-option-box input[type="radio"], .calc-option-box input[type="checkbox"] { width: auto; cursor: pointer; transform: scale(1.2); margin: 0; }
-        .view-control-box label, .calc-option-box label { display: inline; font-size: 0.9rem; color: #fff; cursor: pointer; font-weight: bold; }
-        .view-control-box span, .calc-option-box span { font-size: 0.8rem; color: #888; margin-left: 5px; }
+        .dropdown-content { display: none; background: rgba(26, 26, 26, 0.98); border: 1px solid #444; border-radius: 8px; padding: 10px 15px; margin-top: 5px; position: absolute; width: 100%; box-sizing: border-box; z-index: 150; box-shadow: 0 10px 25px rgba(0,0,0,0.6); backdrop-filter: blur(10px); }
+        .dropdown-content.show { display: block; }
+        
+        /* 各オプション項目を縦並び（改行）にするスタイル */
+        .option-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; width: 100%; }
+        .option-item:not(:last-child) { border-bottom: 1px solid #333; }
+        .dropdown-content input[type="radio"], .dropdown-content input[type="checkbox"] { width: auto; cursor: pointer; transform: scale(1.2); margin: 0; }
+        .dropdown-content label { display: inline; font-size: 0.9rem; color: #fff; cursor: pointer; font-weight: bold; }
+        .dropdown-content .description { font-size: 0.8rem; color: #888; font-weight: normal; margin-left: 5px; }
 
         /* リザルトパネル */
         .result-panel { background: rgba(17, 17, 17, 0.95); box-shadow: 0 10px 30px rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 1000; box-sizing: border-box; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
@@ -153,35 +159,45 @@
         </div>
     </div>
 
-    <div class="calc-option-box">
-        <div style="font-weight: bold; margin-bottom: 10px; color: #fff;">⚙️ 計算・測定オプション</div>
-        <div class="view-control-row">
-            <input type="checkbox" id="isStrut">
-            <label for="isStrut">ストラット式サスペンション</label>
-            <span>(アッパーマウント側でキャンバーを調整する場合はチェック)</span>
+    <div class="dropdown-box calc-opt">
+        <div class="dropdown-trigger" onclick="toggleDropdown('calcDropdown', event)">
+            <span>⚙️ 計算・測定オプション</span>
+            <span class="arrow">▼</span>
         </div>
-        <div class="view-control-row" style="border-bottom: none; padding-bottom: 0;">
-            <span style="font-size: 0.9rem; font-weight: bold; color: #aaa; margin-right: 10px;">基準位置:</span>
-            <input type="radio" name="calcBase" id="baseRim" value="rim" checked>
-            <label for="baseRim" style="margin-right: 20px;">リム基準 (ホイール最外側)</label>
-            
-            <input type="radio" name="calcBase" id="baseTire" value="tire">
-            <label for="baseTire">タイヤ基準 (ショルダー最外側)</label>
+        <div id="calcDropdown" class="dropdown-content">
+            <div class="option-item">
+                <input type="checkbox" id="isStrut">
+                <label for="isStrut">ストラット式サスペンション<span class="description">(アッパー側でキャンバーを調整する場合)</span></label>
+            </div>
+            <div class="option-item">
+                <input type="radio" name="calcBase" id="baseRim" value="rim" checked>
+                <label for="baseRim">リム基準 <span class="description">(ホイール最外側をベースに測定)</span></label>
+            </div>
+            <div class="option-item">
+                <input type="radio" name="calcBase" id="baseTire" value="tire">
+                <label for="baseTire">タイヤ基準 <span class="description">(ショルダー最外側をベースに測定)</span></label>
+            </div>
         </div>
     </div>
 
-    <div class="view-control-box">
-        <div class="view-control-row">
-            <span style="font-size: 0.9rem; font-weight: bold; color: #aaa; margin-right: 10px;">表示モード:</span>
-            <input type="radio" name="viewMode" id="modeLayered" value="layered" checked>
-            <label for="modeLayered" style="margin-right: 20px;">重ねて表示 </label>
-            <input type="radio" name="viewMode" id="modeSide" value="side">
-            <label for="modeSide">左右に並べて表示 </label>
+    <div class="dropdown-box view-opt">
+        <div class="dropdown-trigger" onclick="toggleDropdown('viewDropdown', event)">
+            <span>👁️ 表示・補助線モード</span>
+            <span class="arrow">▼</span>
         </div>
-        <div class="view-control-row" style="border-bottom: none; padding-bottom: 0;">
-            <span style="font-size: 0.9rem; font-weight: bold; color: #aaa; margin-right: 10px;">補助線表示:</span>
-            <input type="checkbox" id="showHubLine" checked>
-            <label for="showHubLine">ハブ基準線 (点線) を表示する</label>
+        <div id="viewDropdown" class="dropdown-content">
+            <div class="option-item">
+                <input type="radio" name="viewMode" id="modeLayered" value="layered" checked>
+                <label for="modeLayered">重ねて表示</label>
+            </div>
+            <div class="option-item">
+                <input type="radio" name="viewMode" id="modeSide" value="side">
+                <label for="modeSide">左右に並べて表示</label>
+            </div>
+            <div class="option-item">
+                <input type="checkbox" id="showHubLine" checked>
+                <label for="showHubLine">ハブ基準線 (点線) を表示する</label>
+            </div>
         </div>
     </div>
 
@@ -240,12 +256,30 @@
 </div>
 
 <script>
-    let lastStretchState = null;
     let zoomLevel = 1.0;
     let toastTimeout = null;
 
     window.addEventListener('DOMContentLoaded', setupToggleText);
     window.addEventListener('resize', setupToggleText);
+
+    // プルダウン開閉ロジック
+    function toggleDropdown(id, event) {
+        event.stopPropagation();
+        const target = document.getElementById(id);
+        const isShow = target.classList.contains('show');
+        
+        // 他のプルダウンをすべて閉じる
+        document.querySelectorAll('.dropdown-content').forEach(el => el.classList.remove('show'));
+        
+        if (!isShow) {
+            target.classList.add('show');
+        }
+    }
+
+    // プルダウンの外側をクリックした時に閉じる
+    window.addEventListener('click', function() {
+        document.querySelectorAll('.dropdown-content').forEach(el => el.classList.remove('show'));
+    });
 
     function setupToggleText() {
         const text = document.getElementById('toggleText');
@@ -285,12 +319,13 @@
 
     function changeZoom(amount) {
         zoomLevel = Math.max(0.5, Math.min(2.5, zoomLevel + amount));
-        compare();
+        compare(false);
     }
 
+    // ズームリセット
     function resetZoom() {
         zoomLevel = 1.0;
-        compare();
+        compare(false);
     }
 
     function getNum(id) {
@@ -328,8 +363,6 @@
 
         const color = isNew ? 'var(--new-spec-color)' : 'var(--compare-color)';
         const bgColor = isNew ? 'rgba(192, 41, 43, 0.6)' : 'rgba(41, 128, 185, 0.6)';
-        
-        // タイヤ部分の塗りつぶし色を透明(transparent)に変更し、線だけに調整
         const gradTop = 'transparent';
 
         const hubX = (maxWPx / 2) + (inset * scale) - (spacer * scale);
@@ -361,7 +394,8 @@
         `;
     }
 
-    function compare() {
+    // 引数 isInputChange で数値の変更(true)か、ラジオ等の変更(false)かを識別
+    function compare(isInputChange = false) {
         const c = { j: getNum('curJ'), i: getNum('curInset'), s: getNum('curSpacer'), a: getNum('curCamber'), tw: getNum('curTWidth'), tr: getNum('curTRatio'), ti: getNum('curTInch') };
         const n = { j: getNum('newJ'), i: getNum('newInset'), s: getNum('newSpacer'), a: getNum('newCamber'), tw: getNum('newTWidth'), tr: getNum('newTRatio'), ti: getNum('newTInch') };
         
@@ -380,17 +414,22 @@
         const curActualW = (c.j + 1) * 25.4;
         const newActualW = (n.j + 1) * 25.4;
 
+        // 引っ張りタイヤの自動検知
         const isStretched = curActualW > c.tw || newActualW > n.tw;
 
-        if (isStretched !== lastStretchState) {
+        // 【修正】数値変更イベント(isInputChangeがtrue)の時のみ自動切り替えをパチパチ実行する
+        if (isInputChange) {
             if (isStretched) {
-                document.getElementById('baseRim').checked = true;
-                showToast("⚠️ 引っ張りタイヤ検知：自動で リム基準 に切り替えました");
+                if (!document.getElementById('baseRim').checked) {
+                    document.getElementById('baseRim').checked = true;
+                    showToast("⚠️ 引っ張りタイヤ検知：自動で リム基準 に切り替えました");
+                }
             } else {
-                document.getElementById('baseTire').checked = true;
-                showToast("💡 標準タイヤ検知：自動で タイヤ基準 に切り替えました");
+                if (!document.getElementById('baseTire').checked) {
+                    document.getElementById('baseTire').checked = true;
+                    showToast("💡 標準タイヤ検知：自動で タイヤ基準 に切り替えました");
+                }
             }
-            lastStretchState = isStretched;
         }
 
         const calcBase = document.querySelector('input[name="calcBase"]:checked').value;
@@ -457,14 +496,18 @@
         }
     }
 
-    const ids = ['curJ','curInset','curSpacer','curCamber','curTWidth','curTRatio','curTInch','newJ','newInset','newSpacer','newCamber','newTWidth','newTRatio','newTInch'];
-    ids.forEach(id => document.getElementById(id).addEventListener('input', compare));
-    document.getElementById('isStrut').addEventListener('change', compare);
-    document.getElementById('showHubLine').addEventListener('change', compare);
-    document.getElementsByName('calcBase').forEach(radio => radio.addEventListener('change', compare));
-    document.getElementsByName('viewMode').forEach(radio => radio.addEventListener('change', compare));
+    // 数値フォームが動いた時は true を渡して自動判定を強制トリガー
+    const inputIds = ['curJ','curInset','curSpacer','curCamber','curTWidth','curTRatio','curTInch','newJ','newInset','newSpacer','newCamber','newTWidth','newTRatio','newTInch'];
+    inputIds.forEach(id => document.getElementById(id).addEventListener('input', () => compare(true)));
+
+    // オプション・ラジオボタン自体を触った時は false を渡して自動判定をスキップ（手動を維持）
+    document.getElementById('isStrut').addEventListener('change', () => compare(false));
+    document.getElementById('showHubLine').addEventListener('change', () => compare(false));
+    document.getElementsByName('calcBase').forEach(radio => radio.addEventListener('change', () => compare(false)));
+    document.getElementsByName('viewMode').forEach(radio => radio.addEventListener('change', () => compare(false)));
     
-    compare();
+    // 初回実行
+    compare(true);
 </script>
 
 </body>
