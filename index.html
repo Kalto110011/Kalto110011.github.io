@@ -98,7 +98,6 @@
         .dropdown-box.calc-opt .dropdown-trigger { border-left: 4px solid var(--accent-color); }
         .dropdown-box.view-opt .dropdown-trigger { border-left: 4px solid var(--compare-color); }
         
-        /* position: absolute を廃止し、コンテンツを下に押し下げる構造に */
         .dropdown-content { display: none; background: rgba(20, 20, 20, 0.95); border: 1px solid #444; border-radius: 8px; padding: 5px 15px; margin-top: 5px; box-sizing: border-box; }
         .dropdown-content.show { display: block; }
         
@@ -262,13 +261,11 @@
     window.addEventListener('DOMContentLoaded', setupToggleText);
     window.addEventListener('resize', setupToggleText);
 
-    // プルダウン開閉ロジック（アコーディオン式）
     function toggleDropdown(id, event) {
         event.stopPropagation();
         const target = document.getElementById(id);
         const isShow = target.classList.contains('show');
         
-        // 他のプルダウンをすべて閉じ、矢印の向きをリセット
         document.querySelectorAll('.dropdown-content').forEach(el => {
             el.classList.remove('show');
             const trigger = el.previousElementSibling;
@@ -284,7 +281,6 @@
         }
     }
 
-    // プルダウンの完全な外側をクリックした時だけ閉じる
     window.addEventListener('click', function() {
         document.querySelectorAll('.dropdown-content').forEach(el => {
             el.classList.remove('show');
@@ -374,7 +370,6 @@
 
         const color = isNew ? 'var(--new-spec-color)' : 'var(--compare-color)';
         const bgColor = isNew ? 'rgba(192, 41, 43, 0.6)' : 'rgba(41, 128, 185, 0.6)';
-        const gradTop = 'transparent';
 
         const hubX = (maxWPx / 2) + (inset * scale) - (spacer * scale);
         const centerY = totalHPx / 2;
@@ -387,8 +382,11 @@
         
         assembly.style.transform = `rotate(-${camber}deg) scale(${zoomLevel})`;
 
+        // 【修正】独立ボックス構造に変更：グラデーションを廃止し、ホイールサイズの塊を物理配置してはみ出しを完全ガード
         assembly.innerHTML = `
-            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; clip-path: ${polygonPath}; background: linear-gradient(to bottom, ${gradTop} 0px, ${gradTop} ${sideHPx}px, ${bgColor} ${sideHPx}px, ${bgColor} ${sideHPx + wheelHPx}px, ${gradTop} ${sideHPx + wheelHPx}px, ${gradTop} 100%);"></div>
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; clip-path: ${polygonPath};">
+                <div style="position: absolute; left: ${wheelX1}px; top: ${sideHPx}px; width: ${wwPx}px; height: ${wheelHPx}px; background: ${bgColor};"></div>
+            </div>
             <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: visible; z-index: 10;">
                 <polygon points="${pointsStr}" fill="none" stroke="${color}" stroke-width="0.5" />
                 <line x1="${hubX}" y1="${centerY - 220}" x2="${hubX}" y2="${centerY + 220}" stroke="${color}" stroke-width="1.5" stroke-dasharray="4 4" style="display: ${showLine ? 'block' : 'none'};"/>
@@ -421,11 +419,12 @@
         updateViz('curAssembly', c.j, c.i, c.s, c.a, c.tw, c.tr, c.ti, false, !modeLayered, showHubLine);
         updateViz('newAssembly', n.j, n.i, n.s, n.a, n.tw, n.tr, n.ti, true, !modeLayered, showHubLine);
 
-        const curActualW = (c.j + 1) * 25.4;
-        const newActualW = (n.j + 1) * 25.4;
+        // 【修正】引っ張り判定を「J数(インチ→mm換算) > タイヤ幅(mm)」の純粋ロジックに変更
+        const isCurStretched = (c.j * 25.4) > c.tw;
+        const isNewStretched = (n.j * 25.4) > n.tw;
+        const isStretched = isCurStretched || isNewStretched;
 
-        const isStretched = curActualW > c.tw || newActualW > n.tw;
-
+        // 【修正】どちらの仕様も標準/太めタイヤに戻ったら自動でタイヤ基準へスイッチするよう改善
         if (isInputChange) {
             if (isStretched) {
                 if (!document.getElementById('baseRim').checked) {
@@ -442,6 +441,9 @@
 
         const calcBase = document.querySelector('input[name="calcBase"]:checked').value;
         const baseName = calcBase === 'rim' ? 'リム' : 'タイヤ';
+
+        const curActualW = (c.j + 1) * 25.4;
+        const newActualW = (n.j + 1) * 25.4;
 
         const curLipOutHub = (curActualW / 2) - c.i + c.s;
         const newLipOutHub = (newActualW / 2) - n.i + n.s;
