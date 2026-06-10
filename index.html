@@ -169,12 +169,8 @@
                 <label for="isStrut">ストラット式サスペンション<span class="description">(アッパー側で調整する場合)</span></label>
             </div>
             <div class="option-item">
-                <input type="radio" name="calcBase" id="baseRim" value="rim" checked>
-                <label for="baseRim">リム基準 <span class="description">(ホイール最外側ベースで測定)</span></label>
-            </div>
-            <div class="option-item">
-                <input type="radio" name="calcBase" id="baseTire" value="tire">
-                <label for="baseTire">タイヤ基準 <span class="description">(ショルダー最外側ベースで測定)</span></label>
+                <input type="checkbox" id="isInchTire">
+                <label for="isInchTire">タイヤサイズをインチ表記にする<span class="description">(例: 31 x 10.5 R 15)</span></label>
             </div>
         </div>
     </div>
@@ -208,7 +204,7 @@
             <div class="input-group"><label>スペーサー</label><input type="text" id="curSpacer" value="0"></div>
             <div class="input-group"><label>キャンバー (度)</label><input type="text" id="curCamber" value="1"></div>
             <div class="input-group">
-                <label>タイヤサイズ (幅 / 扁平 / インチ)</label>
+                <label class="tire-label">タイヤサイズ (幅 / 扁平 / インチ)</label>
                 <div class="tire-inputs">
                     <input type="text" id="curTWidth" value="225">
                     <input type="text" id="curTRatio" value="40">
@@ -224,7 +220,7 @@
             <div class="input-group"><label>スペーサー</label><input type="text" id="newSpacer" value="0"></div>
             <div class="input-group"><label>キャンバー (度)</label><input type="text" id="newCamber" value="3.5"></div>
             <div class="input-group">
-                <label>タイヤサイズ (幅 / 扁平 / インチ)</label>
+                <label class="tire-label">タイヤサイズ (幅 / 扁平 / インチ)</label>
                 <div class="tire-inputs">
                     <input type="text" id="newTWidth" value="215">
                     <input type="text" id="newTRatio" value="35">
@@ -327,12 +323,12 @@
 
     function changeZoom(amount) {
         zoomLevel = Math.max(0.5, Math.min(2.5, zoomLevel + amount));
-        compare(false);
+        compare();
     }
 
     function resetZoom() {
         zoomLevel = 1.0;
-        compare(false);
+        compare();
     }
 
     function getNum(id) {
@@ -402,9 +398,16 @@
         `;
     }
 
-    function compare(isInputChange = false) {
-        const c = { j: getNum('curJ'), i: getNum('curInset'), s: getNum('curSpacer'), a: getNum('curCamber'), tw: getNum('curTWidth'), tr: getNum('curTRatio'), ti: getNum('curTInch') };
-        const n = { j: getNum('newJ'), i: getNum('newInset'), s: getNum('newSpacer'), a: getNum('newCamber'), tw: getNum('newTWidth'), tr: getNum('newTRatio'), ti: getNum('newTInch') };
+    function compare() {
+        const isInchTire = document.getElementById('isInchTire').checked;
+        
+        // ラベルのテキスト動的変更
+        document.querySelectorAll('.tire-label').forEach(label => {
+            label.innerText = isInchTire ? 'タイヤサイズ (外径inch / 幅inch / インチ)' : 'タイヤサイズ (幅 / 扁平 / インチ)';
+        });
+
+        const c = { j: getNum('curJ'), i: getNum('curInset'), s: getNum('curSpacer'), a: getNum('curCamber'), v1: getNum('curTWidth'), v2: getNum('curTRatio'), v3: getNum('curTInch') };
+        const n = { j: getNum('newJ'), i: getNum('newInset'), s: getNum('newSpacer'), a: getNum('newCamber'), v1: getNum('newTWidth'), v2: getNum('newTRatio'), v3: getNum('newTInch') };
         
         const isStrut = document.getElementById('isStrut').checked;
         const showHubLine = document.getElementById('showHubLine').checked;
@@ -412,83 +415,101 @@
         const visualArea = document.getElementById('visualArea');
         visualArea.className = modeLayered ? 'visual-area mode-layered' : 'visual-area mode-side';
 
-        const curDia = calcDia(c.tw, c.tr, c.ti);
-        const newDia = calcDia(n.tw, n.tr, n.ti);
+        let c_tWidth, c_dia, c_inch, c_vizRatio;
+        let n_tWidth, n_dia, n_inch, n_vizRatio;
 
-        updateViz('curAssembly', c.j, c.i, c.s, c.a, c.tw, c.tr, c.ti, false, !modeLayered, showHubLine);
-        updateViz('newAssembly', n.j, n.i, n.s, n.a, n.tw, n.tr, n.ti, true, !modeLayered, showHubLine);
+        // 表記モードによるmm換算ロジック分岐
+        if (isInchTire) {
+            c_dia = c.v1 * 25.4;
+            c_tWidth = c.v2 * 25.4;
+            c_inch = c.v3;
+            c_vizRatio = c_tWidth > 0 ? (((c_dia - c_inch * 25.4) / 2) / c_tWidth) * 100 : 0;
+
+            n_dia = n.v1 * 25.4;
+            n_tWidth = n.v2 * 25.4;
+            n_inch = n.v3;
+            n_vizRatio = n_tWidth > 0 ? (((n_dia - n_inch * 25.4) / 2) / n_tWidth) * 100 : 0;
+        } else {
+            c_tWidth = c.v1;
+            c_dia = calcDia(c.v1, c.v2, c.v3);
+            c_inch = c.v3;
+            c_vizRatio = c.v2;
+
+            n_tWidth = n.v1;
+            n_dia = calcDia(n.v1, n.v2, n.v3);
+            n_inch = n.v3;
+            n_vizRatio = n.v2;
+        }
+
+        // ビジュアル描画エリアの更新
+        updateViz('curAssembly', c.j, c.i, c.s, c.a, c_tWidth, c_vizRatio, c_inch, false, !modeLayered, showHubLine);
+        updateViz('newAssembly', n.j, n.i, n.s, n.a, n_tWidth, n_vizRatio, n_inch, true, !modeLayered, showHubLine);
         
         const curActualW = (c.j + 1) * 25.4;
         const newActualW = (n.j + 1) * 25.4;
         
-        const isCurStretched = c.tw < curActualW;
-        const isNewStretched = n.tw < newActualW;
-        const isStretched = isCurStretched || isNewStretched;
+        // 前後でそれぞれ「引っ張りかどうか」を独立自動判定
+        const isCurStretched = c_tWidth < curActualW;
+        const isNewStretched = n_tWidth < newActualW;
 
-        if (isInputChange) {
-            if (isStretched) {
-                if (!document.getElementById('baseRim').checked) {
-                    document.getElementById('baseRim').checked = true;
-                    showToast("⚠️ 引っ張りタイヤ検知：自動で リム基準 に切り替えました");
-                }
-            } else {
-                if (!document.getElementById('baseTire').checked) {
-                    document.getElementById('baseTire').checked = true;
-                    showToast("💡 標準タイヤ検知：自動で タイヤ基準 に切り替えました");
-                }
-            }
-        }
+        const curBaseName = isCurStretched ? 'リム' : 'タイヤ';
+        const newBaseName = isNewStretched ? 'リム' : 'タイヤ';
 
-        const calcBase = document.querySelector('input[name="calcBase"]:checked').value;
-        const baseName = calcBase === 'rim' ? 'リム' : 'タイヤ';
-
+        // 各基準ごとの基本距離の計算
         const curLipOutHub = (curActualW / 2) - c.i + c.s;
-        const newLipOutHub = (newActualW / 2) - n.i + n.s;
         const curLipInHub = (curActualW / 2) + c.i - c.s;
+        const curTireOutHub = (c_tWidth / 2) - c.i + c.s;
+        const curTireInHub = (c_tWidth / 2) + c.i - c.s;
+
+        const newLipOutHub = (newActualW / 2) - n.i + n.s;
         const newLipInHub = (newActualW / 2) + n.i - n.s;
+        const newTireOutHub = (n_tWidth / 2) - n.i + n.s;
+        const newTireInHub = (n_tWidth / 2) + n.i - n.s;
 
-        const curTireOutHub = (c.tw / 2) - c.i + c.s;
-        const newTireOutHub = (n.tw / 2) - n.i + n.s;
-        const curTireInHub = (c.tw / 2) + c.i - c.s;
-        const newTireInHub = (n.tw / 2) + n.i - n.s;
+        const curRimRadius = (c_inch * 25.4 / 2) + 12.7;
+        const newRimRadius = (n_inch * 25.4 / 2) + 12.7;
+        const curTireMidRadius = (c_dia + (c_inch * 25.4)) / 4;
+        const newTireMidRadius = (n_dia + (n_inch * 25.4)) / 4;
 
-        const curRimRadius = (c.ti * 25.4 / 2) + 12.7;
-        const newRimRadius = (n.ti * 25.4 / 2) + 12.7;
-        const curTireMidRadius = (c.ti * 25.4 / 2) + ((c.tw * c.tr / 100) / 2);
-        const newTireMidRadius = (n.ti * 25.4 / 2) + ((n.tw * n.tr / 100) / 2);
+        let curFinalOut, curFinalIn, newFinalOut, newFinalIn;
 
-        let curFinalOut, newFinalOut, curFinalIn, newFinalIn;
-
-        if (calcBase === 'rim') {
+        // 【前】の基準判定と最終位置計算
+        if (isCurStretched) {
             curFinalOut = curLipOutHub - (curRimRadius * Math.sin(c.a * Math.PI / 180));
-            newFinalOut = newLipOutHub - (newRimRadius * Math.sin(n.a * Math.PI / 180));
             curFinalIn = curLipInHub + (isStrut ? 0 : (curRimRadius * Math.sin(c.a * Math.PI / 180)));
-            newFinalIn = newLipInHub + (isStrut ? 0 : (newRimRadius * Math.sin(n.a * Math.PI / 180)));
         } else {
             curFinalOut = curTireOutHub - (curTireMidRadius * Math.sin(c.a * Math.PI / 180));
-            newFinalOut = newTireOutHub - (newTireMidRadius * Math.sin(n.a * Math.PI / 180));
             curFinalIn = curTireInHub + (isStrut ? 0 : (curTireMidRadius * Math.sin(c.a * Math.PI / 180)));
+        }
+
+        // 【後】の基準判定と最終位置計算
+        if (isNewStretched) {
+            newFinalOut = newLipOutHub - (newRimRadius * Math.sin(n.a * Math.PI / 180));
+            newFinalIn = newLipInHub + (isStrut ? 0 : (newRimRadius * Math.sin(n.a * Math.PI / 180)));
+        } else {
+            newFinalOut = newTireOutHub - (newTireMidRadius * Math.sin(n.a * Math.PI / 180));
             newFinalIn = newTireInHub + (isStrut ? 0 : (newTireMidRadius * Math.sin(n.a * Math.PI / 180)));
         }
 
         const diffOut = newFinalOut - curFinalOut;
         const diffIn = newFinalIn - curFinalIn;
-        const diffHeight = (newDia - curDia) / 2;
+        const diffHeight = (n_dia - c_dia) / 2;
 
-        document.getElementById('textOuterTitle').innerText = `アウター側（${baseName}基準）`;
-        document.getElementById('textInnerTitle').innerText = `インナー側（${baseName}基準）`;
+        // リザルトパネルのタイトルに動的なオート判定基準を表示
+        document.getElementById('textOuterTitle').innerText = `アウター側 [前:${curBaseName} ➡️ 後:${newBaseName}]`;
+        document.getElementById('textInnerTitle').innerText = `インナー側 [前:${curBaseName} ➡️ 後:${newBaseName}]`;
 
         const outEl = document.getElementById('diffOuter');
         const absOutEl = document.getElementById('absOuter');
         outEl.innerText = diffOut >= 0 ? `+ ${diffOut.toFixed(1)} mm 外へ` : `- ${Math.abs(diffOut).toFixed(1)} mm 内へ`;
         outEl.style.color = diffOut >= 0 ? 'var(--accent-color)' : 'var(--compare-color)';
-        absOutEl.innerText = `ハブ面〜${baseName}最外側の距離: ${newFinalOut.toFixed(1)} mm`;
+        absOutEl.innerText = `ハブ面〜最外側(${newBaseName})の距離: ${newFinalOut.toFixed(1)} mm`;
 
         const inEl = document.getElementById('diffInner');
         const absInEl = document.getElementById('absInner');
         inEl.innerText = diffIn >= 0 ? `+ ${diffIn.toFixed(1)} mm 接近` : `- ${Math.abs(diffIn).toFixed(1)} mm 余裕増加`;
         inEl.style.color = diffIn >= 0 ? '#ffcc00' : '#00ff7f';
-        absInEl.innerText = `ハブ面〜${baseName}最内側の距離: ${newFinalIn.toFixed(1)} mm`;
+        absInEl.innerText = `ハブ面〜最内側(${newBaseName})の距離: ${newFinalIn.toFixed(1)} mm`;
 
         const heightEl = document.getElementById('diffHeight');
         if (diffHeight === 0) {
@@ -503,15 +524,55 @@
         }
     }
 
-    const inputIds = ['curJ','curInset','curSpacer','curCamber','curTWidth','curTRatio','curTInch','newJ','newInset','newSpacer','newCamber','newTWidth','newTRatio','newTInch'];
-    inputIds.forEach(id => document.getElementById(id).addEventListener('input', () => compare(true)));
+    // 表記切り替え時の自動数値換算イベントリスナー
+    document.getElementById('isInchTire').addEventListener('change', function() {
+        const isInch = this.checked;
+        showToast(isInch ? "⚙️ インチ表記モードに切り替え" : "⚙️ 通常表記モードに切り替え");
+        
+        // 【前】のサイズ変換
+        let c1 = getNum('curTWidth'), c2 = getNum('curTRatio'), c3 = getNum('curTInch');
+        if (isInch) {
+            const dia = calcDia(c1, c2, c3);
+            if (dia > 0) {
+                document.getElementById('curTWidth').value = (dia / 25.4).toFixed(1);
+                document.getElementById('curTRatio').value = (c1 / 25.4).toFixed(1);
+            }
+        } else {
+            if (c1 > 0 && c2 > 0) {
+                const wMm = c2 * 25.4;
+                const ratio = (((c1 - c3) / 2) / c2) * 100;
+                document.getElementById('curTWidth').value = Math.round(wMm);
+                document.getElementById('curTRatio').value = Math.round(ratio);
+            }
+        }
 
-    document.getElementById('isStrut').addEventListener('change', () => compare(false));
-    document.getElementById('showHubLine').addEventListener('change', () => compare(false));
-    document.getElementsByName('calcBase').forEach(radio => radio.addEventListener('change', () => compare(false)));
-    document.getElementsByName('viewMode').forEach(radio => radio.addEventListener('change', () => compare(false)));
+        // 【後】のサイズ変換
+        let n1 = getNum('newTWidth'), n2 = getNum('newTRatio'), n3 = getNum('newTInch');
+        if (isInch) {
+            const dia = calcDia(n1, n2, n3);
+            if (dia > 0) {
+                document.getElementById('newTWidth').value = (dia / 25.4).toFixed(1);
+                document.getElementById('newTRatio').value = (n1 / 25.4).toFixed(1);
+            }
+        } else {
+            if (n1 > 0 && n2 > 0) {
+                const wMm = n2 * 25.4;
+                const ratio = (((n1 - n3) / 2) / n2) * 100;
+                document.getElementById('newTWidth').value = Math.round(wMm);
+                document.getElementById('newTRatio').value = Math.round(ratio);
+            }
+        }
+        compare();
+    });
+
+    const inputIds = ['curJ','curInset','curSpacer','curCamber','curTWidth','curTRatio','curTInch','newJ','newInset','newSpacer','newCamber','newTWidth','newTRatio','newTInch'];
+    inputIds.forEach(id => document.getElementById(id).addEventListener('input', compare));
+
+    document.getElementById('isStrut').addEventListener('change', compare);
+    document.getElementById('showHubLine').addEventListener('change', compare);
+    document.getElementsByName('viewMode').forEach(radio => radio.addEventListener('change', compare));
     
-    compare(true);
+    compare();
 </script>
 
 </body>
