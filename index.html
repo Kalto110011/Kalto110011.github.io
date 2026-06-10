@@ -382,7 +382,6 @@
         
         assembly.style.transform = `rotate(-${camber}deg) scale(${zoomLevel})`;
 
-        // 【修正】独立ボックス構造に変更：グラデーションを廃止し、ホイールサイズの塊を物理配置してはみ出しを完全ガード
         assembly.innerHTML = `
             <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; clip-path: ${polygonPath};">
                 <div style="position: absolute; left: ${wheelX1}px; top: ${sideHPx}px; width: ${wwPx}px; height: ${wheelHPx}px; background: ${bgColor};"></div>
@@ -421,27 +420,27 @@
         
         const curActualW = (c.j + 1) * 25.4;
         const newActualW = (n.j + 1) * 25.4;
+        
+        const isCurStretched = c.tw < curActualW;
+        const isNewStretched = n.tw < newActualW;
         const isStretched = isCurStretched || isNewStretched;
 
-if (isInputChange) {
-    if (isStretched) {
-        if (!document.getElementById('baseRim').checked) {
-            document.getElementById('baseRim').checked = true;
-            showToast("引っ張りタイヤ検知：自動で リム基準 に切り替えました");
+        if (isInputChange) {
+            if (isStretched) {
+                if (!document.getElementById('baseRim').checked) {
+                    document.getElementById('baseRim').checked = true;
+                    showToast("⚠️ 引っ張りタイヤ検知：自動で リム基準 に切り替えました");
+                }
+            } else {
+                if (!document.getElementById('baseTire').checked) {
+                    document.getElementById('baseTire').checked = true;
+                    showToast("💡 標準タイヤ検知：自動で タイヤ基準 に切り替えました");
+                }
+            }
         }
-    } else {
-        
-        if (!document.getElementById('baseTire').checked) {
-            document.getElementById('baseTire').checked = true;
-            showToast("標準タイヤ検知：自動で タイヤ基準 に切り替えました");
-        }
-    }
-}
+
         const calcBase = document.querySelector('input[name="calcBase"]:checked').value;
         const baseName = calcBase === 'rim' ? 'リム' : 'タイヤ';
-
-        const curActualW = (c.j + 1) * 25.4;
-        const newActualW = (n.j + 1) * 25.4;
 
         const curLipOutHub = (curActualW / 2) - c.i + c.s;
         const newLipOutHub = (newActualW / 2) - n.i + n.s;
