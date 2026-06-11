@@ -1,549 +1,663 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-BQKHCPRJNG"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-BQKHCPRJNG');
+    </script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> Wheel Fitment Sim | ホイールオフセット・キャンバーによる出面自動計算ツール </title>
+    <title>Wheel Fitment Sim | ホイール出幅自動計算ツール</title>
     <style>
         :root {
-            --bg-color: #f4f6f9;
-            --card-bg: #ffffff;
-            --text-color: #333333;
-            --text-muted: #666666;
-            --current-color: #2563eb; /* 青 */
-            --new-color: #dc2626;     /* 赤 */
-            --border-color: #e5e7eb;
-            --accent-bg: #f8fafc;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            line-height: 1.6;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            background: var(--card-bg);
-            padding: 24px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-
-        h1 {
-            font-size: 20px;
-            text-align: center;
-            margin-bottom: 24px;
-            color: #1e293b;
-        }
-
-        .grid-inputs {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 24px;
-        }
-
-        @media (max-width: 650px) {
-            .grid-inputs {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .input-group {
-            border: 1px solid var(--border-color);
-            padding: 16px;
-            border-radius: 8px;
-            background-color: var(--accent-bg);
-        }
-
-        .input-group.current { border-top: 4px solid var(--current-color); }
-        .input-group.new { border-top: 4px solid var(--new-color); }
-
-        .input-group h2 {
-            font-size: 16px;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .input-group.current h2 { color: var(--current-color); }
-        .input-group.new h2 { color: var(--new-color); }
-
-        .form-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .form-row:last-child { margin-bottom: 0; }
-
-        .form-row label {
-            font-size: 14px;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        .form-row input, .form-row select {
-            width: 140px;
-            padding: 6px 8px;
-            border: 1px solid #cbd5e1;
-            border-radius: 4px;
-            font-size: 14px;
+            --bg-image: url('bg.png'); 
+            --bg-color: #0f0f0f;
+            --card-bg: rgba(26, 26, 26, 0.93);
+            --text-color: #e0e0e0;
+            --accent-color: #ff4500;
+            --compare-color: #00bfff;
+            --new-spec-color: #e74c3c;
+            --border-color: #333;
         }
         
-        .form-row input {
-            text-align: right;
+        body { 
+            background-image: var(--bg-image);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-color: var(--bg-color); 
+            color: var(--text-color); 
+            font-family: sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            padding-bottom: 90px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
         }
 
-        /* グラフィックエリア */
-        .visual-area {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 20px;
-            background: #ffffff;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 16px;
+        .container { 
+            max-width: 850px; 
+            width: 100%; 
+            background: var(--card-bg); 
+            padding: 25px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8); 
+            border: 1px solid var(--border-color); 
+            box-sizing: border-box;
+            backdrop-filter: blur(5px); 
         }
+        
+        h1 { text-align: center; color: #fff; font-size: 1.6rem; border-bottom: 2px solid var(--accent-color); padding-bottom: 10px; margin-top: 0; margin-bottom: 25px; }
+        
+        .columns { display: flex; gap: 20px; margin-bottom: 20px; }
+        .column { flex: 1; background: rgba(34, 34, 34, 0.85); padding: 15px; border-radius: 8px; border: 1px solid #444; }
+        
+        .column-title { font-weight: bold; margin-bottom: 15px; color: #fff; text-align: center; font-size: 0.9rem; }
+        .input-group { margin-bottom: 10px; }
+        .tire-inputs { display: flex; gap: 5px; }
+        .tire-inputs input { text-align: center; }
+        label { display: block; margin-bottom: 4px; font-size: 0.8rem; color: #aaa; }
+        input, select { width: 100%; padding: 8px; background: #111; border: 1px solid #444; border-radius: 4px; color: #fff; font-size: 1rem; box-sizing: border-box; }
+        input:focus, select:focus { border-color: var(--accent-color); outline: none; }
+        /* プルダウンの矢印を少し調整 */
+        select { appearance: auto; -webkit-appearance: auto; -moz-appearance: auto; cursor: pointer;}
+        
+        /* 描画エリア & ズームボタン */
+        .visual-area { position: relative; background: #ffffff; padding: 0; border-radius: 8px; margin-bottom: 25px; height: 350px; border: 1px solid #ccc; overflow: hidden; }
+        .viz-label { position: absolute; top: 10px; left: 0; width: 100%; font-size: 0.8rem; font-weight: bold; color: #333; text-align: center; z-index: 5; pointer-events: none; }
+        .pane { height: 100%; box-sizing: border-box; position: relative; }
+        .pane-label { position: absolute; top: 15px; width: 100%; text-align: center; font-size: 0.75rem; font-weight: bold; z-index: 5; pointer-events: none; }
+        .wheel-assembly { position: absolute; transition: transform 0.1s ease-out, left 0.2s ease-out, top 0.2s ease-out; mix-blend-mode: multiply; }
+        
+        .visual-area.mode-layered { display: block; }
+        .visual-area.mode-layered .pane { position: absolute; top: 0; left: 0; width: 100%; }
+        .visual-area.mode-layered .pane-label { display: none; } 
+        .visual-area.mode-layered .viz-label { display: block; }
 
-        svg {
-            max-width: 100%;
-            height: auto;
-            background: #fafafa;
-            border-radius: 4px;
-        }
+        .visual-area.mode-side { display: flex; }
+        .visual-area.mode-side .pane { flex: 1; }
+        .visual-area.mode-side #curPane { border-right: 1px dashed #ccc; }
+        .visual-area.mode-side .pane-label { display: block; } 
+        .visual-area.mode-side .viz-label { display: none; }
 
-        /* 💡 ドットの解説文スタイル */
-        .explanation-box {
-            width: 100%;
-            margin-top: 12px;
-            padding: 12px 16px;
-            background-color: #f0fdf4;
-            border-left: 4px solid #16a34a;
-            border-radius: 0 4px 4px 0;
-            font-size: 13px;
-            color: #166534;
-        }
+        .zoom-controls { position: absolute; bottom: 15px; right: 15px; display: flex; gap: 6px; z-index: 20; }
+        .zoom-controls button { width: 36px; height: 36px; background: rgba(0, 0, 0, 0.75); border: 1px solid #555; color: #fff; border-radius: 6px; font-size: 1.1rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; user-select: none; }
+        .zoom-controls button:active { background: var(--accent-color); border-color: var(--accent-color); }
 
-        .explanation-box strong {
-            display: block;
-            margin-bottom: 4px;
-            color: #14532d;
-        }
+        /* トースト通知 */
+        #toast { visibility: hidden; min-width: 280px; background-color: rgba(30, 30, 30, 0.95); color: #fff; text-align: center; border-radius: 8px; padding: 12px 16px; position: fixed; z-index: 2000; top: 20px; left: 50%; transform: translateX(-50%); font-size: 0.85rem; font-weight: bold; transition: opacity 0.4s, transform 0.4s; opacity: 0; border: 1px solid var(--accent-color); box-shadow: 0 4px 15px rgba(0,0,0,0.5); pointer-events: none; }
+        #toast.show { visibility: visible; opacity: 1; transform: translate(-50%, 10px); }
+
+        /* 下に伸びるアコーディオン型プルダウン */
+        .dropdown-box { margin-bottom: 15px; width: 100%; }
+        .dropdown-trigger { background: rgba(34, 34, 34, 0.85); border: 1px solid #444; padding: 12px 15px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 0.95rem; color: #fff; user-select: none; box-sizing: border-box; }
+        .dropdown-trigger:hover { border-color: #666; }
+        .dropdown-box.calc-opt .dropdown-trigger { border-left: 4px solid var(--accent-color); }
+        .dropdown-box.view-opt .dropdown-trigger { border-left: 4px solid var(--compare-color); }
+        
+        .dropdown-content { display: none; background: rgba(20, 20, 20, 0.95); border: 1px solid #444; border-radius: 8px; padding: 5px 15px; margin-top: 5px; box-sizing: border-box; }
+        .dropdown-content.show { display: block; }
+        
+        .option-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; width: 100%; flex-wrap: wrap;} /* flex-wrap追加 */
+        .option-item:not(:last-child) { border-bottom: 1px solid #333; }
+        .dropdown-content input[type="radio"], .dropdown-content input[type="checkbox"] { width: auto; cursor: pointer; transform: scale(1.2); margin: 0; }
+        .dropdown-content label { display: inline; font-size: 0.9rem; color: #fff; cursor: pointer; font-weight: bold; width: 100%;} /* width追加 */
+        .dropdown-content .description { font-size: 0.8rem; color: #888; font-weight: normal; margin-left: 5px; display: block; margin-top: 4px;} /* display blockなど追加 */
 
         /* リザルトパネル */
-        .result-panel {
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 20px;
-            background-color: #f8fafc;
-            text-align: center;
+        .result-panel { background: rgba(17, 17, 17, 0.95); box-shadow: 0 10px 30px rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 1000; box-sizing: border-box; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        .sheet-toggle { height: 50px; display: flex; justify-content: center; align-items: center; cursor: pointer; color: #fff; font-weight: bold; font-size: 1rem; background: #1a1a1a; }
+        .result-item { display: flex; flex-direction: column; padding: 12px 0; border-bottom: 1px solid #333; font-size: 0.95rem; }
+        .result-item:last-child { border-bottom: none; }
+        .result-title { display: flex; justify-content: space-between; margin-bottom: 5px; color: #ccc;}
+        .diff-val { font-weight: bold; font-size: 1.1rem; }
+        .abs-val { font-size: 0.8rem; color: #aaa; text-align: right; }
+
+        @media (max-width: 767px) {
+            .columns { flex-direction: column; }
+            .result-panel { position: fixed; bottom: 0; left: 0; width: 100%; border-top: 3px solid var(--accent-color); border-radius: 20px 20px 0 0; transform: translateY(calc(100% - 50px)); }
+            .result-panel.open { transform: translateY(0); }
+            .sheet-toggle { border-radius: 20px 20px 0 0; position: relative; }
+            .sheet-toggle::before { content: ''; position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 40px; height: 5px; background: #666; border-radius: 3px; }
+            .sheet-content { padding: 10px 25px 35px 25px; }
         }
 
-        .result-title {
-            font-size: 14px;
-            font-weight: bold;
-            color: var(--text-muted);
-            margin-bottom: 12px;
-        }
-
-        .result-flex {
-            display: flex;
-            justify-content: space-around;
-            gap: 16px;
-        }
-
-        @media (max-width: 480px) {
-            .result-flex {
-                flex-direction: column;
-                gap: 12px;
-            }
-        }
-
-        .result-box {
-            flex: 1;
-            background: #ffffff;
-            padding: 14px;
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
-        }
-
-        .result-label {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-bottom: 6px;
-        }
-
-        /* モバイル用の改行コントロールを含む数値デザイン */
-        .result-value {
-            font-size: 22px;
-            font-weight: 800;
-            color: #0f172a;
-            line-height: 1.3;
-        }
-
-        .result-value .unit {
-            font-size: 14px;
-            font-weight: normal;
-            color: var(--text-muted);
-            margin-right: 4px;
-        }
-
-        /* 方向テキスト（外に出ます / 内に入ります）のラッパー */
-        .direction-text {
-            font-size: 16px;
-            font-weight: bold;
-        }
-        
-        .direction-text.out { color: #dc2626; }
-        .direction-text.in { color: #2563eb; }
-        .direction-text.keep { color: var(--text-muted); }
-
-        /* モバイル専用改行タグ */
-        .mobile-br {
-            display: none;
-        }
-
-        @media (max-width: 480px) {
-            .mobile-br {
-                display: block;
-            }
-            .result-value {
-                font-size: 20px;
-            }
-            .direction-text {
-                font-size: 15px;
-                display: block;
-                margin-top: 4px;
-            }
+        @media (min-width: 768px) {
+            .result-panel { position: fixed; top: 25px; right: 25px; width: 340px; border: 1px solid var(--border-color); border-top: 4px solid var(--accent-color); border-radius: 8px; overflow: hidden; }
+            .sheet-toggle { height: 45px; font-size: 0.95rem; }
+            .sheet-content { padding: 5px 20px 15px 20px; transition: max-height 0.3s ease-out, opacity 0.3s ease-out; max-height: 400px; opacity: 1; }
+            .result-panel.pc-closed .sheet-content { max-height: 0; padding-top: 0; padding-bottom: 0; opacity: 0; pointer-events: none; }
         }
     </style>
 </head>
 <body>
 
+<div id="toast"></div>
+
 <div class="container">
-    <h1>足回り形式対応・ツライチ出幅計算シミュレーター</h1>
+    <h1>Wheel Fitment Sim</h1>
 
-    <div class="grid-inputs">
-        <div class="input-group current">
-            <h2>● 現在の仕様 (青)</h2>
-            <div class="form-row">
-                <label>タイヤ幅 (mm)</label>
-                <input type="number" id="cur_tire" value="215" step="10">
-            </div>
-            <div class="form-row">
-                <label>リム径 (インチ)</label>
-                <input type="number" id="cur_dia" value="16" step="1">
-            </div>
-            <div class="form-row">
-                <label>リム幅 (J)</label>
-                <input type="number" id="cur_rim" value="8.0" step="0.5">
-            </div>
-            <div class="form-row">
-                <label>インセット (mm)</label>
-                <input type="number" id="cur_inset" value="45" step="1">
-            </div>
-            <div class="form-row">
-                <label>足回りオプション</label>
-                <select id="cur_susp">
-                    <option value="axle">アクスル (ハブ中心軸)</option>
-                    <option value="multi_up">マルチリンク: アッパーアーム</option>
-                    <option value="multi_low">マルチリンク: ロアアーム</option>
-                    <option value="strut_up">ストラット: アッパーアーム</option>
-                    <option value="strut_low">ストラット: ロアアーム延長</option>
-                </select>
-            </div>
-            <div class="form-row">
-                <label>キャンバー角 (度)</label>
-                <input type="number" id="cur_cam" value="0.0" step="0.5" min="0" max="20">
-            </div>
+    <div id="visualArea" class="visual-area mode-layered">
+        <div class="viz-label">現在 (青) ⇔ 変更案 (赤)</div>
+        <div id="curPane" class="pane">
+            <div class="pane-label" style="color: #2980b9;">【前】現在の仕様</div>
+            <div id="curAssembly" class="wheel-assembly" style="z-index: 2;"></div>
         </div>
-
-        <div class="input-group new">
-            <h2>● 変更案 (赤)</h2>
-            <div class="form-row">
-                <label>タイヤ幅 (mm)</label>
-                <input type="number" id="new_tire" value="225" step="10">
-            </div>
-            <div class="form-row">
-                <label>リム径 (インチ)</label>
-                <input type="number" id="new_dia" value="16" step="1">
-            </div>
-            <div class="form-row">
-                <label>リム幅 (J)</label>
-                <input type="number" id="new_rim" value="9.0" step="0.5">
-            </div>
-            <div class="form-row">
-                <label>インセット (mm)</label>
-                <input type="number" id="new_inset" value="35" step="1">
-            </div>
-            <div class="form-row">
-                <label>足回りオプション</label>
-                <select id="new_susp">
-                    <option value="strut_low" selected>ストラット: ロアアーム延長</option>
-                    <option value="multi_up">マルチリンク: アッパーアーム</option>
-                    <option value="multi_low">マルチリンク: ロアアーム</option>
-                    <option value="strut_up">ストラット: アッパーアーム</option>
-                    <option value="axle">アクスル (ハブ中心軸)</option>
-                </select>
-            </div>
-            <div class="form-row">
-                <label>キャンバー角 (度)</label>
-                <input type="number" id="new_cam" value="3.0" step="0.5" min="0" max="20">
-            </div>
+        <div id="newPane" class="pane">
+            <div class="pane-label" style="color: #c0392b;">【後】変更案</div>
+            <div id="newAssembly" class="wheel-assembly" style="z-index: 3;"></div>
         </div>
-    </div>
-
-    <div class="visual-area">
-        <svg id="preview" width="500" height="320" viewBox="0 0 500 320">
-            </svg>
         
-        <div class="explanation-box">
-            <strong>💡 点（●）の表示について</strong>
-            図の中の点（●）は、それぞれの足回り形式・キャンバー角において<strong>最も外側・内側に突出している（出っ張っている）部分</strong>を自動判定したものです。当ツールはこの点同士の距離（フェンダー水平基準）を元に出幅の差分を計算しています。
+        <div class="zoom-controls">
+            <button onclick="changeZoom(0.25)">＋</button>
+            <button onclick="resetZoom()">・</button>
+            <button onclick="changeZoom(-0.25)">ー</button>
         </div>
     </div>
 
-    <div class="result-panel">
-        <div class="result-title">現在の仕様 からの計算結果 (フェンダー頂点・水平ライン基準)</div>
-        <div class="result-flex">
-            <div class="result-box">
-                <div class="result-label">アウター側（外ツラトップ変化）</div>
-                <div class="result-value" id="outer_result">
-                    <span class="num">0.0</span><span class="unit">mm</span><br class="mobile-br"><span class="direction-text">変化なし</span>
+    <div class="dropdown-box calc-opt">
+        <div class="dropdown-trigger" onclick="toggleDropdown('calcDropdown', event)">
+            <span> 計算・測定オプション</span>
+            <span class="arrow">▼</span>
+        </div>
+        <div id="calcDropdown" class="dropdown-content" onclick="event.stopPropagation()">
+            <div class="option-item" style="flex-direction: column; align-items: flex-start;">
+                <label for="suspensionType">サスペンション形式 ＆ 調整箇所</label>
+                <select id="suspensionType">
+                    <option value="strut_upper">ストラット：アッパーアーム</option>
+                    <option value="strut_lower">ストラット：ロアアーム</option>
+                    <option value="multi_upper">マルチリンク：アッパーアーム</option>
+                    <option value="multi_lower">マルチリンク：ロアアーム</option>
+                    <option value="axle">アクスル（車軸懸架）</option>
+                </select>
+                <span class="description" id="suspensionDesc">アッパーマウント部を支点にキャンバーが変化します。(例: ピロアッパー調整)</span>
+            </div>
+            
+            <div class="option-item">
+                <input type="checkbox" id="isInchTire">
+                <label for="isInchTire">タイヤサイズをインチ表記にする<span class="description">(例: 31 x 10.5 R 15)</span></label>
+            </div>
+        </div>
+    </div>
+
+    <div class="dropdown-box view-opt">
+        <div class="dropdown-trigger" onclick="toggleDropdown('viewDropdown', event)">
+            <span> 表示オプション</span>
+            <span class="arrow">▼</span>
+        </div>
+        <div id="viewDropdown" class="dropdown-content" onclick="event.stopPropagation()">
+            <div class="option-item">
+                <input type="radio" name="viewMode" id="modeLayered" value="layered" checked>
+                <label for="modeLayered">重ねて表示</label>
+            </div>
+            <div class="option-item">
+                <input type="radio" name="viewMode" id="modeSide" value="side">
+                <label for="modeSide">左右に並べて表示</label>
+            </div>
+            <div class="option-item">
+                <input type="checkbox" id="showHubLine" checked>
+                <label for="showHubLine">ハブ基準線 (点線) を表示する</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="columns">
+        <div class="column current-spec">
+            <div class="column-title" style="color: var(--compare-color);">🔹 現在の仕様</div>
+            <div class="input-group"><label>J数</label><input type="text" id="curJ" value="8.5"></div>
+            <div class="input-group"><label>インセット</label><input type="text" id="curInset" value="45"></div>
+            <div class="input-group"><label>スペーサー</label><input type="text" id="curSpacer" value="0"></div>
+            <div class="input-group"><label>キャンバー (度)</label><input type="text" id="curCamber" value="1"></div>
+            <div class="input-group">
+                <label class="tire-label">タイヤサイズ (幅 / 扁平 / インチ)</label>
+                <div class="tire-inputs">
+                    <input type="text" id="curTWidth" value="225">
+                    <input type="text" id="curTRatio" value="40">
+                    <input type="text" id="curTInch" value="18">
                 </div>
             </div>
-            <div class="result-box">
-                <div class="result-label">インナー側（サス・アーム干渉変化）</div>
-                <div class="result-value" id="inner_result">
-                    <span class="num">0.0</span><span class="unit">mm</span><br class="mobile-br"><span class="direction-text">変化なし</span>
+        </div>
+        
+        <div class="column new-spec">
+            <div class="column-title" style="color: var(--new-spec-color);">🔸 変更案</div>
+            <div class="input-group"><label>J数</label><input type="text" id="newJ" value="10.0"></div>
+            <div class="input-group"><label>インセット</label><input type="text" id="newInset" value="20"></div>
+            <div class="input-group"><label>スペーサー</label><input type="text" id="newSpacer" value="0"></div>
+            <div class="input-group"><label>キャンバー (度)</label><input type="text" id="newCamber" value="3.5"></div>
+            <div class="input-group">
+                <label class="tire-label">タイヤサイズ (幅 / 扁平 / インチ)</label>
+                <div class="tire-inputs">
+                    <input type="text" id="newTWidth" value="215">
+                    <input type="text" id="newTRatio" value="35">
+                    <input type="text" id="newTInch" value="18">
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<div id="bottomSheet" class="result-panel">
+    <div class="sheet-toggle" onclick="toggleResultPanel()">
+        <span id="toggleText">▼ 計算結果を閉じる</span>
+    </div>
+    <div class="sheet-content">
+        <div class="result-item">
+            <div class="result-title"><span id="textOuterTitle">アウター側</span><span class="diff-val" id="diffOuter">--</span></div>
+            <div class="abs-val" id="absOuter">ハブ面〜最外側の距離: -- mm</div>
+        </div>
+        <div class="result-item">
+            <div class="result-title"><span id="textInnerTitle">インナー側</span><span class="diff-val" id="diffInner">--</span></div>
+            <div class="abs-val" id="absInner">ハブ面〜最内側の距離: -- mm</div>
+        </div>
+        <div class="result-item">
+            <div class="result-title"><span>車高の変化（タイヤ半径差）</span><span class="diff-val" id="diffHeight">--</span></div>
+        </div>
+    </div>
+</div>
+
 <script>
-    const inputs = [
-        'cur_tire', 'cur_dia', 'cur_rim', 'cur_inset', 'cur_susp', 'cur_cam',
-        'new_tire', 'new_dia', 'new_rim', 'new_inset', 'new_susp', 'new_cam'
-    ].reduce((acc, id) => ({ ...acc, [id]: document.getElementById(id) }), {});
+    let zoomLevel = 1.0;
+    let toastTimeout = null;
 
-    const svg = document.getElementById('preview');
+    window.addEventListener('DOMContentLoaded', setupToggleText);
+    window.addEventListener('resize', setupToggleText);
 
-    function calculateAndDraw() {
-        const cTire = parseFloat(inputs.cur_tire.value) || 0;
-        const cDia = parseFloat(inputs.cur_dia.value) || 0;
-        const cRim = parseFloat(inputs.cur_rim.value) || 0;
-        const cInset = parseFloat(inputs.cur_inset.value) || 0;
-        const cSusp = inputs.cur_susp.value;
-        const cCam = parseFloat(inputs.cur_cam.value) || 0;
-
-        const nTire = parseFloat(inputs.new_tire.value) || 0;
-        const nDia = parseFloat(inputs.new_dia.value) || 0;
-        const nRim = parseFloat(inputs.new_rim.value) || 0;
-        const nInset = parseFloat(inputs.new_inset.value) || 0;
-        const nSusp = inputs.new_susp.value;
-        const nCam = parseFloat(inputs.new_cam.value) || 0;
-
-        const scale = 0.55; 
-        const centerX = 250; 
-        const centerY = 160; 
-
-        function getSpecExtremes(tire, dia, rim, inset, susp, cam) {
-            const rimWidthMm = rim * 25.4;
-            const rimDiaMm = dia * 25.4;
-            const tireWidthMm = tire;
-            
-            const wCX = centerX + (inset * scale);
-
-            const rTopY = centerY - (rimDiaMm / 2) * scale;
-            const rBotY = centerY + (rimDiaMm / 2) * scale;
-            const rLeftX = wCX - (rimWidthMm / 2) * scale;
-            const rRightX = wCX + (rimWidthMm / 2) * scale;
-
-            const tTopY = rTopY - 45 * scale; 
-            const tLeftX = wCX - (tireWidthMm / 2) * scale;
-            const tRightX = wCX + (tireWidthMm / 2) * scale;
-
-            let points = [
-                {x: rLeftX, y: rTopY, type: 'rim'},   
-                {x: rRightX, y: rTopY, type: 'rim'},  
-                {x: rLeftX, y: rBotY, type: 'rim'},   
-                {x: rRightX, y: rBotY, type: 'rim'},  
-                {x: tLeftX, y: rTopY - 10 * scale, type: 'tire'}, 
-                {x: tRightX, y: rTopY - 10 * scale, type: 'tire'},
-                {x: wCX, y: tTopY, type: 'tire'}      
-            ];
-
-            // 支点 (Pivot) の決定
-            let px = centerX;
-            let py = centerY;
-
-            if (susp.startsWith('multi')) {
-                const knuckleHeight = (dia - 1) * 25.4 * scale;
-                if (susp === 'multi_up') {
-                    py = centerY + (knuckleHeight / 2); // アッパー調整 ＝ 支点は下
-                } else {
-                    py = centerY - (knuckleHeight / 2); // ロア調整 ＝ 支点は上
-                }
-            } else if (susp === 'strut_up') {
-                py = rBotY; // ストラットアッパー ＝ 下側リム基準
-            } else if (susp === 'strut_low') {
-                py = rTopY; // 💡 ストラットロア延長 ＝ 上側リム基準（アッパーマウントが不動軸のため）
-            } else if (susp === 'axle') {
-                py = centerY; // アクスル ＝ ハブ中心
-            }
-
-            const angleRad = (cam * Math.PI) / 180;
-            const cos = Math.cos(angleRad);
-            const sin = Math.sin(angleRad);
-
-            let rotatedPoints = points.map(p => {
-                const rx = (p.x - px) * cos - (p.y - py) * sin + px;
-                const ry = (p.x - px) * sin + (p.y - py) * cos + py;
-                return { x: rx, y: ry, type: p.type };
-            });
-
-            // フェンダー頂点（上半分）でのツラ測定点をソート抽出
-            const upperPoints = rotatedPoints.filter(p => p.y < centerY + 20);
-            
-            let maxOuter = Infinity; 
-            let maxInner = -Infinity; 
-            let outPt = upperPoints[0];
-            let inPt = upperPoints[0];
-
-            upperPoints.forEach(p => {
-                if (p.x < maxOuter) { maxOuter = p.x; outPt = p; }
-                if (p.x > maxInner) { maxInner = p.x; inPt = p; }
-            });
-
-            return { outPt, inPt, rotatedPoints, pivot: {x: px, y: py}, wCX, rTopY, rBotY, rLeftX, rRightX, tTopY, tLeftX, tRightX, rimWidthMm, tireWidthMm };
+    function toggleDropdown(id, event) {
+        event.stopPropagation();
+        const target = document.getElementById(id);
+        const isShow = target.classList.contains('show');
+        
+        document.querySelectorAll('.dropdown-content').forEach(el => {
+            el.classList.remove('show');
+            const trigger = el.previousElementSibling;
+            if (trigger) trigger.querySelector('.arrow').innerText = '▼';
+        });
+        
+        const currentTrigger = target.previousElementSibling;
+        if (!isShow) {
+            target.classList.add('show');
+            if (currentTrigger) currentTrigger.querySelector('.arrow').innerText = '▲';
+        } else {
+            if (currentTrigger) currentTrigger.querySelector('.arrow').innerText = '▼';
         }
-
-        const curData = getSpecExtremes(cTire, cDia, cRim, cInset, cSusp, cCam);
-        const newData = getSpecExtremes(nTire, nDia, nRim, nInset, nSusp, nCam);
-
-        const outerDiff = (curData.outPt.x - newData.outPt.x) / scale;
-        const innerDiff = (newData.inPt.x - curData.inPt.x) / scale;
-
-        updateResultElement('outer_result', outerDiff, '外に出ます', '内に入ります');
-        updateResultElement('inner_result', innerDiff, '内（サス側）へ近づきます', '外（サス側）から遠ざかります');
-
-        drawAll(curData, newData, scale, centerX, centerY);
     }
 
-    function updateResultElement(elementId, diff, positiveText, negativeText) {
-        const container = document.getElementById(elementId);
-        let dirClass = 'keep';
-        let dirText = '変化なし';
+    window.addEventListener('click', function(e) {
+        // セレクトボックスをクリックした時は閉じないようにする
+        if (e.target.tagName === 'SELECT' || e.target.tagName === 'OPTION') return;
 
-        if (diff > 0.05) {
-            dirClass = 'out';
-            dirText = positiveText;
-        } else if (diff < -0.05) {
-            dirClass = 'in';
-            dirText = negativeText;
-        }
-
-        container.innerHTML = `<span class="num">${diff > 0 ? '+' : ''}${diff === 0 ? '0.0' : diff.toFixed(1)}</span><span class="unit">mm</span><br class="mobile-br"><span class="direction-text ${dirClass}">${dirText}</span>`;
-    }
-
-    function drawAll(cur, nxt, scale, cx, cy) {
-        svg.innerHTML = ''; 
-
-        // センターライン
-        createLine(cx, 10, cx, 300, '#cbd5e1', '2,2');
-
-        function renderSpec(d, color, opacity, cam) {
-            const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-            g.setAttribute('transform', `rotate(${cam}, ${d.pivot.x}, ${d.pivot.y})`);
-            g.setAttribute('opacity', opacity);
-
-            const rimH = 10 * scale;
-            createRect(d.rLeftX, d.rTopY, d.rimWidthMm * scale, rimH, color, g);
-            createRect(d.rLeftX, d.rBotY - rimH, d.rimWidthMm * scale, rimH, color, g);
-            createLine(cx + (d.rLeftX - d.rRightX)/4, d.rTopY, cx + (d.rLeftX - d.rRightX)/4, d.rBotY, color, '0', 2, g);
-
-            const isStretched = d.tireWidthMm <= d.rimWidthMm;
-            let pathData = '';
-            if (isStretched) {
-                pathData = `M ${d.rLeftX} ${d.rTopY} C ${d.rLeftX + 8} ${d.tTopY + 12}, ${d.tLeftX} ${d.tTopY}, ${d.wCX} ${d.tTopY} S ${d.rRightX - 8} ${d.tTopY + 12}, ${d.rRightX} ${d.rTopY} Z`;
-            } else {
-                pathData = `M ${d.rLeftX} ${d.rTopY} C ${d.tLeftX} ${d.rTopY - 5}, ${d.tLeftX} ${d.tTopY}, ${d.wCX} ${d.tTopY} S ${d.tRightX} ${d.rTopY - 5}, ${d.rRightX} ${d.rTopY} Z`;
-            }
-            createPath(pathData, color, g);
-            svg.appendChild(g);
-
-            createCircle(d.outPt.x, d.outPt.y, 5, color);
-            createCircle(d.inPt.x, d.inPt.y, 5, color);
-        }
-
-        renderSpec(cur, '#2563eb', 0.35, parseFloat(inputs.cur_cam.value)||0);
-        renderSpec(nxt, '#dc2626', 0.85, parseFloat(inputs.new_cam.value)||0);
-
-        createLegend(25, 30, '#2563eb', '現在の最突出点 (●)');
-        createLegend(25, 55, '#dc2626', '変更案の最突出点 (●)');
-    }
-
-    function createLine(x1, y1, x2, y2, color, dash = '0', width = 1, parent = svg) {
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('x1', x1); line.setAttribute('y1', y1); line.setAttribute('x2', x2); line.setAttribute('y2', y2);
-        line.setAttribute('stroke', color); line.setAttribute('stroke-width', width);
-        if (dash !== '0') line.setAttribute('stroke-dasharray', dash);
-        parent.appendChild(line);
-    }
-
-    function createRect(x, y, w, h, color, parent = svg) {
-        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        rect.setAttribute('x', x); rect.setAttribute('y', y); rect.setAttribute('width', w); rect.setAttribute('height', h);
-        rect.setAttribute('fill', 'none'); rect.setAttribute('stroke', color); rect.setAttribute('stroke-width', 1.5);
-        parent.appendChild(rect);
-    }
-
-    function createPath(data, color, parent = svg) {
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path.setAttribute('d', data); path.setAttribute('fill', 'none'); path.setAttribute('stroke', color); path.setAttribute('stroke-width', 2);
-        parent.appendChild(path);
-    }
-
-    function createCircle(cx, cy, r, color) {
-        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        circle.setAttribute('cx', cx); circle.setAttribute('cy', cy); circle.setAttribute('r', r);
-        circle.setAttribute('fill', color); circle.setAttribute('stroke', '#ffffff'); circle.setAttribute('stroke-width', 1.5);
-        svg.appendChild(circle);
-    }
-
-    function createLegend(x, y, color, text) {
-        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        circle.setAttribute('cx', x); circle.setAttribute('cy', y - 4); circle.setAttribute('r', 5); circle.setAttribute('fill', color);
-        svg.appendChild(circle);
-        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        txt.setAttribute('x', x + 15); txt.setAttribute('y', y); txt.setAttribute('fill', '#333333'); txt.setAttribute('font-size', '12px'); txt.textContent = text;
-        svg.appendChild(txt);
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        calculateAndDraw();
-        Object.values(inputs).forEach(input => {
-            input.addEventListener('input', calculateAndDraw);
-            input.addEventListener('change', calculateAndDraw);
+        document.querySelectorAll('.dropdown-content').forEach(el => {
+            el.classList.remove('show');
+            const trigger = el.previousElementSibling;
+            if (trigger) trigger.querySelector('.arrow').innerText = '▼';
         });
     });
+
+    function setupToggleText() {
+        const text = document.getElementById('toggleText');
+        const sheet = document.getElementById('bottomSheet');
+        if (window.innerWidth >= 768) {
+            text.innerText = '▼ 計算結果を閉じる';
+            sheet.classList.remove('pc-closed');
+        } else {
+            text.innerText = '▲ 計算結果を見る';
+            sheet.classList.remove('open');
+        }
+    }
+
+    function toggleResultPanel() {
+        const sheet = document.getElementById('bottomSheet');
+        const text = document.getElementById('toggleText');
+        
+        if (window.innerWidth >= 768) {
+            sheet.classList.toggle('pc-closed');
+            text.innerText = sheet.classList.contains('pc-closed') ? '▲ 計算結果を開く' : '▼ 計算結果を閉じる';
+        } else {
+            sheet.classList.toggle('open');
+            text.innerText = sheet.classList.contains('open') ? '▼ 閉じる' : '▲ 計算結果を見る';
+        }
+    }
+
+    function showToast(message) {
+        const toast = document.getElementById("toast");
+        toast.innerText = message;
+        toast.classList.add("show");
+        
+        if (toastTimeout) clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => { 
+            toast.classList.remove("show"); 
+        }, 3000);
+    }
+
+    function changeZoom(amount) {
+        zoomLevel = Math.max(0.5, Math.min(2.5, zoomLevel + amount));
+        compare();
+    }
+
+    function resetZoom() {
+        zoomLevel = 1.0;
+        compare();
+    }
+
+    function getNum(id) {
+        const val = document.getElementById(id).value;
+        const num = parseFloat(val);
+        return isNaN(num) ? 0 : num;
+    }
+
+    function calcDia(width, ratio, inch) {
+        if(width <= 0 || ratio <= 0 || inch <= 0) return 0;
+        return (width * (ratio / 100) * 2) + (inch * 25.4);
+    }
+
+    function updateViz(id, j, inset, spacer, camber, tWidth, tRatio, inch, isNew, showKnuckle, showLine) {
+        const assembly = document.getElementById(id);
+        const dia = calcDia(tWidth, tRatio, inch);
+        if(dia === 0) return;
+
+        const scale = 0.4; 
+        const actualJWidth = (j + 1) * 25.4; 
+        const wwPx = actualJWidth * scale;       
+        const twPx = tWidth * scale;           
+        const totalHPx = dia * scale;          
+        const wheelHPx = (inch * 25.4) * scale;
+        const sideHPx = (totalHPx - wheelHPx) / 2; 
+
+        const maxWPx = Math.max(wwPx, twPx);
+        const tireX1 = (maxWPx - twPx) / 2;
+        const tireX2 = tireX1 + twPx;
+        const wheelX1 = (maxWPx - wwPx) / 2;
+        const wheelX2 = wheelX1 + wwPx;
+
+        const polygonPath = `polygon(${tireX1}px 0px, ${tireX2}px 0px, ${wheelX2}px ${sideHPx}px, ${wheelX2}px ${sideHPx + wheelHPx}px, ${tireX2}px ${totalHPx}px, ${tireX1}px ${totalHPx}px, ${wheelX1}px ${sideHPx + wheelHPx}px, ${wheelX1}px ${sideHPx})`;
+        const pointsStr = `${tireX1},0 ${tireX2},0 ${wheelX2},${sideHPx} ${wheelX2},${sideHPx + wheelHPx} ${tireX2},${totalHPx} ${tireX1},${totalHPx} ${wheelX1},${sideHPx + wheelHPx} ${wheelX1},${sideHPx}`;
+
+        const color = isNew ? 'var(--new-spec-color)' : 'var(--compare-color)';
+        const bgColor = isNew ? 'rgba(192, 41, 43, 0.6)' : 'rgba(41, 128, 185, 0.6)';
+
+        const hubX = (maxWPx / 2) + (inset * scale) - (spacer * scale);
+        const centerY = totalHPx / 2;
+
+        assembly.style.width = maxWPx + 'px';
+        assembly.style.height = totalHPx + 'px';
+        
+        // 描画上の支点（見た目の回転）は一律ハブ中心付近（下部）にしておきます。
+        // 計算上の出幅の支点は `compare()` 関数内で個別に計算されます。
+        assembly.style.transformOrigin = `${hubX}px ${centerY}px`;
+        
+        assembly.style.left = `calc(50% - ${hubX}px)`;
+        assembly.style.top = `calc(50% - ${centerY}px)`; 
+        
+        assembly.style.transform = `rotate(-${camber}deg) scale(${zoomLevel})`;
+
+        assembly.innerHTML = `
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; clip-path: ${polygonPath};">
+                <div style="position: absolute; left: ${wheelX1}px; top: ${sideHPx}px; width: ${wwPx}px; height: ${wheelHPx}px; background: ${bgColor};"></div>
+            </div>
+            <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: visible; z-index: 10;">
+                <polygon points="${pointsStr}" fill="none" stroke="${color}" stroke-width="0.5" />
+                <line x1="${hubX}" y1="${centerY - 220}" x2="${hubX}" y2="${centerY + 220}" stroke="${color}" stroke-width="1.5" stroke-dasharray="4 4" style="display: ${showLine ? 'block' : 'none'};"/>
+                <g style="display: ${showKnuckle ? 'block' : 'none'};">
+                    <line x1="${hubX}" y1="${centerY - 30}" x2="${hubX}" y2="${centerY + 30}" stroke="${color}" stroke-width="6" stroke-linecap="round"/>
+                    <line x1="${hubX}" y1="${centerY}" x2="${hubX - 20}" y2="${centerY}" stroke="${color}" stroke-width="5" stroke-linecap="round"/>
+                    <line x1="${hubX - 20}" y1="${centerY}" x2="${hubX - 30}" y2="${centerY - 60}" stroke="${color}" stroke-width="4" stroke-linecap="round"/>
+                    <line x1="${hubX - 20}" y1="${centerY}" x2="${hubX - 25}" y2="${centerY + 60}" stroke="${color}" stroke-width="4" stroke-linecap="round"/>
+                    <circle cx="${hubX - 30}" cy="${centerY - 60}" r="5" fill="${color}" />
+                    <circle cx="${hubX - 25}" cy="${centerY + 60}" r="5" fill="${color}" />
+                    <circle cx="${hubX - 20}" cy="${centerY}" r="6" fill="${color}" />
+                </g>
+            </svg>
+        `;
+    }
+
+    function compare() {
+        const isInchTire = document.getElementById('isInchTire').checked;
+        
+        // ラベルのテキスト動的変更
+        document.querySelectorAll('.tire-label').forEach(label => {
+            label.innerText = isInchTire ? 'タイヤサイズ (外径inch / 幅inch / インチ)' : 'タイヤサイズ (幅 / 扁平 / インチ)';
+        });
+
+        const c = { j: getNum('curJ'), i: getNum('curInset'), s: getNum('curSpacer'), a: getNum('curCamber'), v1: getNum('curTWidth'), v2: getNum('curTRatio'), v3: getNum('curTInch') };
+        const n = { j: getNum('newJ'), i: getNum('newInset'), s: getNum('newSpacer'), a: getNum('newCamber'), v1: getNum('newTWidth'), v2: getNum('newTRatio'), v3: getNum('newTInch') };
+        
+        // 追加: サスペンション形式の取得
+        const suspensionType = document.getElementById('suspensionType').value;
+        
+        const showHubLine = document.getElementById('showHubLine').checked;
+        const modeLayered = document.getElementById('modeLayered').checked;
+        const visualArea = document.getElementById('visualArea');
+        visualArea.className = modeLayered ? 'visual-area mode-layered' : 'visual-area mode-side';
+
+        let c_tWidth, c_dia, c_inch, c_vizRatio;
+        let n_tWidth, n_dia, n_inch, n_vizRatio;
+
+        // 表記モードによるmm換算ロジック分岐
+        if (isInchTire) {
+            c_dia = c.v1 * 25.4;
+            c_tWidth = c.v2 * 25.4;
+            c_inch = c.v3;
+            c_vizRatio = c_tWidth > 0 ? (((c_dia - c_inch * 25.4) / 2) / c_tWidth) * 100 : 0;
+
+            n_dia = n.v1 * 25.4;
+            n_tWidth = n.v2 * 25.4;
+            n_inch = n.v3;
+            n_vizRatio = n_tWidth > 0 ? (((n_dia - n_inch * 25.4) / 2) / n_tWidth) * 100 : 0;
+        } else {
+            c_tWidth = c.v1;
+            c_dia = calcDia(c.v1, c.v2, c.v3);
+            c_inch = c.v3;
+            c_vizRatio = c.v2;
+
+            n_tWidth = n.v1;
+            n_dia = calcDia(n.v1, n.v2, n.v3);
+            n_inch = n.v3;
+            n_vizRatio = n.v2;
+        }
+
+        // ビジュアル描画エリアの更新
+        updateViz('curAssembly', c.j, c.i, c.s, c.a, c_tWidth, c_vizRatio, c_inch, false, !modeLayered, showHubLine);
+        updateViz('newAssembly', n.j, n.i, n.s, n.a, n_tWidth, n_vizRatio, n_inch, true, !modeLayered, showHubLine);
+        
+        const curActualW = (c.j + 1) * 25.4;
+        const newActualW = (n.j + 1) * 25.4;
+        
+        // 前後でそれぞれ「引っ張りかどうか」を独立自動判定
+        const isCurStretched = c_tWidth < curActualW;
+        const isNewStretched = n_tWidth < newActualW;
+
+        const curBaseName = isCurStretched ? 'リム' : 'タイヤ';
+        const newBaseName = isNewStretched ? 'リム' : 'タイヤ';
+
+        // 各基準ごとの基本距離の計算
+        const curLipOutHub = (curActualW / 2) - c.i + c.s;
+        const curLipInHub = (curActualW / 2) + c.i - c.s;
+        const curTireOutHub = (c_tWidth / 2) - c.i + c.s;
+        const curTireInHub = (c_tWidth / 2) + c.i - c.s;
+
+        const newLipOutHub = (newActualW / 2) - n.i + n.s;
+        const newLipInHub = (newActualW / 2) + n.i - n.s;
+        const newTireOutHub = (n_tWidth / 2) - n.i + n.s;
+        const newTireInHub = (n_tWidth / 2) + n.i - n.s;
+
+        const curRimRadius = (c_inch * 25.4 / 2) + 12.7;
+        const newRimRadius = (n_inch * 25.4 / 2) + 12.7;
+        const curTireMidRadius = (c_dia + (c_inch * 25.4)) / 4;
+        const newTireMidRadius = (n_dia + (n_inch * 25.4)) / 4;
+
+        let curFinalOut, curFinalIn, newFinalOut, newFinalIn;
+
+        // ★追加: 5つのサスペンション形式ごとの支点ロジック
+        // 支点がどこにあるかで、キャンバー角(a)をつけた時の「アウター/インナーの出幅(変位量)」の計算式が変わります。
+        
+        function calculateOffset(baseOut, baseIn, radius, camberAngle, type) {
+            const angleRad = camberAngle * Math.PI / 180;
+            const shift = radius * Math.sin(angleRad);
+            
+            let finalOut, finalIn;
+            
+            switch(type) {
+                case 'strut_upper':
+                    // 上部支点: 上が固定され、下が外に出るイメージ。アウターは変わらず、インナーが奥へ入る(余裕が減る)
+                    finalOut = baseOut; 
+                    finalIn = baseIn + shift;
+                    break;
+                case 'strut_lower':
+                    // 下部支点: 下が固定され、上が内に入る。アウターは内へ入り、インナーは変わらない
+                    finalOut = baseOut - shift;
+                    finalIn = baseIn;
+                    break;
+                case 'multi_upper':
+                    // マルチ・アッパー: 上を引っ込める。アウターは内へ入り、インナーは奥へ入る。
+                    // 支点がナックルより上にあると仮定した簡易モデル
+                    finalOut = baseOut - shift;
+                    finalIn = baseIn + (shift * 0.5); // 上側が動くのでインナーも少し奥へ
+                    break;
+                case 'multi_lower':
+                    // マルチ・ロア: 下を押し出す。アウターは外へ出がち、インナーは逃げる。
+                    finalOut = baseOut + (shift * 0.5);
+                    finalIn = baseIn - shift;
+                    break;
+                case 'axle':
+                    // アクスル: ハブ全体が傾く(またはキャンバープレート等)。アウターは上部が内へ、インナー上部も内(奥)へ
+                    finalOut = baseOut - shift;
+                    finalIn = baseIn + shift;
+                    break;
+                default:
+                    // デフォルトはロア支点的な一般的なキャンバー変化
+                    finalOut = baseOut - shift;
+                    finalIn = baseIn + shift;
+            }
+            return { out: finalOut, in: finalIn };
+        }
+
+        // 【前】の基準判定と最終位置計算
+        const curRadius = isCurStretched ? curRimRadius : curTireMidRadius;
+        const curBaseOut = isCurStretched ? curLipOutHub : curTireOutHub;
+        const curBaseIn = isCurStretched ? curLipInHub : curTireInHub;
+        const curPos = calculateOffset(curBaseOut, curBaseIn, curRadius, c.a, suspensionType);
+        curFinalOut = curPos.out;
+        curFinalIn = curPos.in;
+
+        // 【後】の基準判定と最終位置計算
+        const newRadius = isNewStretched ? newRimRadius : newTireMidRadius;
+        const newBaseOut = isNewStretched ? newLipOutHub : newTireOutHub;
+        const newBaseIn = isNewStretched ? newLipInHub : newTireInHub;
+        const newPos = calculateOffset(newBaseOut, newBaseIn, newRadius, n.a, suspensionType);
+        newFinalOut = newPos.out;
+        newFinalIn = newPos.in;
+
+
+        const diffOut = newFinalOut - curFinalOut;
+        const diffIn = newFinalIn - curFinalIn;
+        const diffHeight = (n_dia - c_dia) / 2;
+
+        // リザルトパネルのタイトルに動的なオート判定基準を表示
+        document.getElementById('textOuterTitle').innerText = `アウター側 [前:${curBaseName} ➡️ 後:${newBaseName}]`;
+        document.getElementById('textInnerTitle').innerText = `インナー側 [前:${curBaseName} ➡️ 後:${newBaseName}]`;
+
+        const outEl = document.getElementById('diffOuter');
+        const absOutEl = document.getElementById('absOuter');
+        outEl.innerText = diffOut >= 0 ? `+ ${diffOut.toFixed(1)} mm 外へ` : `- ${Math.abs(diffOut).toFixed(1)} mm 内へ`;
+        outEl.style.color = diffOut >= 0 ? 'var(--accent-color)' : 'var(--compare-color)';
+        absOutEl.innerText = `ハブ面〜最外側(${newBaseName})の距離: ${newFinalOut.toFixed(1)} mm`;
+
+        const inEl = document.getElementById('diffInner');
+        const absInEl = document.getElementById('absInner');
+        inEl.innerText = diffIn >= 0 ? `+ ${diffIn.toFixed(1)} mm 接近` : `- ${Math.abs(diffIn).toFixed(1)} mm 余裕増加`;
+        inEl.style.color = diffIn >= 0 ? '#ffcc00' : '#00ff7f';
+        absInEl.innerText = `ハブ面〜最内側(${newBaseName})の距離: ${newFinalIn.toFixed(1)} mm`;
+
+        const heightEl = document.getElementById('diffHeight');
+        if (diffHeight === 0) {
+            heightEl.innerText = `± 0.0 mm`;
+            heightEl.style.color = '#fff';
+        } else if (diffHeight > 0) {
+            heightEl.innerText = `+ ${diffHeight.toFixed(1)} mm 上がる`;
+            heightEl.style.color = '#ffcc00';
+        } else {
+            heightEl.innerText = `- ${Math.abs(diffHeight).toFixed(1)} mm 下がる`;
+            heightEl.style.color = '#00ff7f';
+        }
+    }
+
+    // ★追加: セレクトボックス変更時の説明テキスト変更イベント
+    document.getElementById('suspensionType').addEventListener('change', function() {
+        const descEl = document.getElementById('suspensionDesc');
+        switch(this.value) {
+            case 'strut_upper':
+                descEl.innerText = "アッパーマウント部を支点にキャンバーが変化します。(例: ピロアッパー調整)";
+                break;
+            case 'strut_lower':
+                descEl.innerText = "ロアブラケット等、下部を支点にキャンバーが変化します。(例: ロアアーム延長)";
+                break;
+            case 'multi_upper':
+                descEl.innerText = "アッパーアームの伸縮でキャンバーが変化します。(上部が内側に入ります)";
+                break;
+            case 'multi_lower':
+                descEl.innerText = "ロアアームの伸縮でキャンバーが変化します。(下部が外側に押し出されます)";
+                break;
+            case 'axle':
+                descEl.innerText = "ハブ(アクスル)全体が傾くため、上下の出幅が連動して変化します。(例: キャンバープレート)";
+                break;
+        }
+        compare(); // 再計算
+    });
+
+
+    // 表記切り替え時の自動数値換算イベントリスナー
+    document.getElementById('isInchTire').addEventListener('change', function() {
+        const isInch = this.checked;
+        showToast(isInch ? "⚙️ インチ表記モードに切り替え" : "⚙️ 通常表記モードに切り替え");
+        
+        // 【前】のサイズ変換
+        let c1 = getNum('curTWidth'), c2 = getNum('curTRatio'), c3 = getNum('curTInch');
+        if (isInch) {
+            const dia = calcDia(c1, c2, c3);
+            if (dia > 0) {
+                document.getElementById('curTWidth').value = (dia / 25.4).toFixed(1);
+                document.getElementById('curTRatio').value = (c1 / 25.4).toFixed(1);
+            }
+        } else {
+            if (c1 > 0 && c2 > 0) {
+                const wMm = c2 * 25.4;
+                const ratio = (((c1 - c3) / 2) / c2) * 100;
+                document.getElementById('curTWidth').value = Math.round(wMm);
+                document.getElementById('curTRatio').value = Math.round(ratio);
+            }
+        }
+
+        // 【後】のサイズ変換
+        let n1 = getNum('newTWidth'), n2 = getNum('newTRatio'), n3 = getNum('newTInch');
+        if (isInch) {
+            const dia = calcDia(n1, n2, n3);
+            if (dia > 0) {
+                document.getElementById('newTWidth').value = (dia / 25.4).toFixed(1);
+                document.getElementById('newTRatio').value = (n1 / 25.4).toFixed(1);
+            }
+        } else {
+            if (n1 > 0 && n2 > 0) {
+                const wMm = n2 * 25.4;
+                const ratio = (((n1 - n3) / 2) / n2) * 100;
+                document.getElementById('newTWidth').value = Math.round(wMm);
+                document.getElementById('newTRatio').value = Math.round(ratio);
+            }
+        }
+        compare();
+    });
+
+    const inputIds = ['curJ','curInset','curSpacer','curCamber','curTWidth','curTRatio','curTInch','newJ','newInset','newSpacer','newCamber','newTWidth','newTRatio','newTInch'];
+    inputIds.forEach(id => document.getElementById(id).addEventListener('input', compare));
+
+    document.getElementById('showHubLine').addEventListener('change', compare);
+    document.getElementsByName('viewMode').forEach(radio => radio.addEventListener('change', compare));
+    
+    compare();
 </script>
 
 </body>
