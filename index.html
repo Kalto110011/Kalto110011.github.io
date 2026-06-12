@@ -169,13 +169,13 @@
             <div class="option-item" style="flex-direction: column; align-items: flex-start;">
                 <label for="suspensionType">サスペンション形式 ＆ 調整箇所</label>
                 <select id="suspensionType">
-                    <option value="strut_upper">ストラット：アッパーアーム</option>
-                    <option value="strut_lower">ストラット：ロアアーム</option>
-                    <option value="multi_upper">マルチリンク：アッパーアーム</option>
-                    <option value="multi_lower">マルチリンク：ロアアーム</option>
-                    <option value="axle">アクスル（車軸懸架）</option>
+                    <option value="axle">アクスル: ハブ中心</option>
+                    <option value="multi_up">マルチリンク: アッパーアーム調整</option>
+                    <option value="multi_low">マルチリンク: ロアアーム調整</option>
+                    <option value="strut_up">ストラット: アッパー側調整</option>
+                    <option value="strut_low" selected>ストラット: ロア側延長</option>
                 </select>
-                <span class="description" id="suspensionDesc">アッパーマウント部を支点にキャンバーが変化します。(例: ピロアッパー調整)</span>
+                <span class="description" id="suspensionDesc">リム上端付近を支点に、ロア側延長時のキャンバー変化として計算します。</span>
             </div>
             
             <div class="option-item">
@@ -495,52 +495,41 @@
         // ★追加: 5つのサスペンション形式ごとの支点ロジック
         // 支点がどこにあるかで、キャンバー角(a)をつけた時の「アウター/インナーの出幅(変位量)」の計算式が変わります。
         
-        function calculateOffset(baseOut, baseIn, radius, camberAngle, type) {
-            const angleRad = camberAngle * Math.PI / 180;
-            const shift = radius * Math.sin(angleRad);
-            
-            let finalOut, finalIn;
-            
+        function getPivotYOffset(type, wheelInch) {
+            const rimRadius = (wheelInch * 25.4) / 2;
+            const knuckleHalfHeight = ((wheelInch - 1) * 25.4) / 2;
+
             switch(type) {
-                case 'strut_upper':
-                    // 上部支点: 上が固定され、下が外に出るイメージ。アウターは変わらず、インナーが奥へ入る(余裕が減る)
-                    finalOut = baseOut; 
-                    finalIn = baseIn + shift;
-                    break;
-                case 'strut_lower':
-                    // 下部支点: 下が固定され、上が内に入る。アウターは内へ入り、インナーは変わらない
-                    finalOut = baseOut - shift;
-                    finalIn = baseIn;
-                    break;
-                case 'multi_upper':
-                    // マルチ・アッパー: 上を引っ込める。アウターは内へ入り、インナーは奥へ入る。
-                    // 支点がナックルより上にあると仮定した簡易モデル
-                    finalOut = baseOut - shift;
-                    finalIn = baseIn + (shift * 0.5); // 上側が動くのでインナーも少し奥へ
-                    break;
-                case 'multi_lower':
-                    // マルチ・ロア: 下を押し出す。アウターは外へ出がち、インナーは逃げる。
-                    finalOut = baseOut + (shift * 0.5);
-                    finalIn = baseIn - shift;
-                    break;
+                case 'multi_up':
+                    return knuckleHalfHeight;
+                case 'multi_low':
+                    return -knuckleHalfHeight;
+                case 'strut_up':
+                    return rimRadius;
+                case 'strut_low':
+                    return -rimRadius;
                 case 'axle':
-                    // アクスル: ハブ全体が傾く(またはキャンバープレート等)。アウターは上部が内へ、インナー上部も内(奥)へ
-                    finalOut = baseOut - shift;
-                    finalIn = baseIn + shift;
-                    break;
                 default:
-                    // デフォルトはロア支点的な一般的なキャンバー変化
-                    finalOut = baseOut - shift;
-                    finalIn = baseIn + shift;
+                    return 0;
             }
-            return { out: finalOut, in: finalIn };
         }
 
+        function calculateOffset(baseOut, baseIn, radius, camberAngle, type, wheelInch) {
+            const angleRad = camberAngle * Math.PI / 180;
+            const pivotY = getPivotYOffset(type, wheelInch);
+            const effectiveRadius = Math.max(0, radius + pivotY);
+            const shift = effectiveRadius * Math.sin(angleRad);
+
+            return {
+                out: baseOut - shift,
+                in: baseIn + shift
+            };
+        }
         // 【前】の基準判定と最終位置計算
         const curRadius = isCurStretched ? curRimRadius : curTireMidRadius;
         const curBaseOut = isCurStretched ? curLipOutHub : curTireOutHub;
         const curBaseIn = isCurStretched ? curLipInHub : curTireInHub;
-        const curPos = calculateOffset(curBaseOut, curBaseIn, curRadius, c.a, suspensionType);
+        const curPos = calculateOffset(curBaseOut, curBaseIn, curRadius, c.a, suspensionType, c_inch);
         curFinalOut = curPos.out;
         curFinalIn = curPos.in;
 
@@ -548,7 +537,7 @@
         const newRadius = isNewStretched ? newRimRadius : newTireMidRadius;
         const newBaseOut = isNewStretched ? newLipOutHub : newTireOutHub;
         const newBaseIn = isNewStretched ? newLipInHub : newTireInHub;
-        const newPos = calculateOffset(newBaseOut, newBaseIn, newRadius, n.a, suspensionType);
+        const newPos = calculateOffset(newBaseOut, newBaseIn, newRadius, n.a, suspensionType, n_inch);
         newFinalOut = newPos.out;
         newFinalIn = newPos.in;
 
@@ -590,23 +579,23 @@
     document.getElementById('suspensionType').addEventListener('change', function() {
         const descEl = document.getElementById('suspensionDesc');
         switch(this.value) {
-            case 'strut_upper':
-                descEl.innerText = "アッパーマウント部を支点にキャンバーが変化します。(例: ピロアッパー調整)";
-                break;
-            case 'strut_lower':
-                descEl.innerText = "ロアブラケット等、下部を支点にキャンバーが変化します。(例: ロアアーム延長)";
-                break;
-            case 'multi_upper':
-                descEl.innerText = "アッパーアームの伸縮でキャンバーが変化します。(上部が内側に入ります)";
-                break;
-            case 'multi_lower':
-                descEl.innerText = "ロアアームの伸縮でキャンバーが変化します。(下部が外側に押し出されます)";
-                break;
             case 'axle':
-                descEl.innerText = "ハブ(アクスル)全体が傾くため、上下の出幅が連動して変化します。(例: キャンバープレート)";
+                descEl.innerText = '加工アクスルやキャンバープレートなどアクスル車のキャンバー調整想定です';
+                break;
+            case 'multi_up':
+                descEl.innerText = 'マルチリンクのアッパー側でのキャンバー調整想定です。';
+                break;
+            case 'multi_low':
+                descEl.innerText = 'マルチリンクのロア側でのキャンバー調整想定です。';
+                break;
+            case 'strut_up':
+                descEl.innerText = 'ストラットのアッパー側でのキャンバー調整想定です。';
+                break;
+            case 'strut_low':
+                descEl.innerText = 'ストラットのロア側でのキャンバー延長想定です。';
                 break;
         }
-        compare(); // 再計算
+        compare();
     });
 
 
