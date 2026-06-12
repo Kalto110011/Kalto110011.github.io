@@ -355,7 +355,26 @@
         return (width * (ratio / 100) * 2) + (inch * 25.4);
     }
 
-    function updateViz(id, j, inset, spacer, camber, tWidth, tRatio, inch, isNew, showKnuckle, showLine) {
+    function getPivotYOffset(type, wheelInch) {
+        const rimRadius = (wheelInch * 25.4) / 2;
+        const knuckleHalfHeight = ((wheelInch - 1) * 25.4) / 2;
+
+        switch(type) {
+            case 'multi_up':
+                return knuckleHalfHeight;
+            case 'multi_low':
+                return -knuckleHalfHeight;
+            case 'strut_up':
+                return rimRadius;
+            case 'strut_low':
+                return -rimRadius;
+            case 'axle':
+            default:
+                return 0;
+        }
+    }
+
+    function updateViz(id, j, inset, spacer, camber, tWidth, tRatio, inch, isNew, showKnuckle, showLine, suspensionType) {
         const assembly = document.getElementById(id);
         const dia = calcDia(tWidth, tRatio, inch);
         if(dia === 0) return;
@@ -386,9 +405,8 @@
         assembly.style.width = maxWPx + 'px';
         assembly.style.height = totalHPx + 'px';
         
-        // 描画上の支点（見た目の回転）は一律ハブ中心付近（下部）にしておきます。
-        // 計算上の出幅の支点は `compare()` 関数内で個別に計算されます。
-        assembly.style.transformOrigin = `${hubX}px ${centerY}px`;
+        const pivotY = centerY + (getPivotYOffset(suspensionType, inch) * scale);
+        assembly.style.transformOrigin = `${hubX}px ${pivotY}px`;
         
         assembly.style.left = `calc(50% - ${hubX}px)`;
         assembly.style.top = `calc(50% - ${centerY}px)`; 
@@ -461,8 +479,8 @@
         }
 
         // ビジュアル描画エリアの更新
-        updateViz('curAssembly', c.j, c.i, c.s, c.a, c_tWidth, c_vizRatio, c_inch, false, !modeLayered, showHubLine);
-        updateViz('newAssembly', n.j, n.i, n.s, n.a, n_tWidth, n_vizRatio, n_inch, true, !modeLayered, showHubLine);
+        updateViz('curAssembly', c.j, c.i, c.s, c.a, c_tWidth, c_vizRatio, c_inch, false, !modeLayered, showHubLine, suspensionType);
+        updateViz('newAssembly', n.j, n.i, n.s, n.a, n_tWidth, n_vizRatio, n_inch, true, !modeLayered, showHubLine, suspensionType);
         
         const curActualW = (c.j + 1) * 25.4;
         const newActualW = (n.j + 1) * 25.4;
@@ -495,25 +513,6 @@
         // ★追加: 5つのサスペンション形式ごとの支点ロジック
         // 支点がどこにあるかで、キャンバー角(a)をつけた時の「アウター/インナーの出幅(変位量)」の計算式が変わります。
         
-        function getPivotYOffset(type, wheelInch) {
-            const rimRadius = (wheelInch * 25.4) / 2;
-            const knuckleHalfHeight = ((wheelInch - 1) * 25.4) / 2;
-
-            switch(type) {
-                case 'multi_up':
-                    return knuckleHalfHeight;
-                case 'multi_low':
-                    return -knuckleHalfHeight;
-                case 'strut_up':
-                    return rimRadius;
-                case 'strut_low':
-                    return -rimRadius;
-                case 'axle':
-                default:
-                    return 0;
-            }
-        }
-
         function calculateOffset(baseOut, baseIn, radius, camberAngle, type, wheelInch) {
             const angleRad = camberAngle * Math.PI / 180;
             const pivotY = getPivotYOffset(type, wheelInch);
@@ -580,19 +579,19 @@
         const descEl = document.getElementById('suspensionDesc');
         switch(this.value) {
             case 'axle':
-                descEl.innerText = '加工アクスルやキャンバープレートなどアクスル車のキャンバー調整想定です';
+                descEl.innerText = 'ハブ中心を支点に、タイヤ・ホイール全体がキャンバー角分だけ傾く想定です。';
                 break;
             case 'multi_up':
-                descEl.innerText = 'マルチリンクのアッパー側でのキャンバー調整想定です。';
+                descEl.innerText = 'マルチリンクのアッパー側調整想定です。下側寄りを支点にして上側の入り量を大きめに見ます。';
                 break;
             case 'multi_low':
-                descEl.innerText = 'マルチリンクのロア側でのキャンバー調整想定です。';
+                descEl.innerText = 'マルチリンクのロア側調整想定です。上側寄りを支点にしてキャンバー変化を見ます。';
                 break;
             case 'strut_up':
-                descEl.innerText = 'ストラットのアッパー側でのキャンバー調整想定です。';
+                descEl.innerText = 'ストラットのアッパー側調整想定です。リム下端付近を支点にして計算します。';
                 break;
             case 'strut_low':
-                descEl.innerText = 'ストラットのロア側でのキャンバー延長想定です。';
+                descEl.innerText = 'ストラットのロア側延長想定です。リム上端付近を支点にして計算します。';
                 break;
         }
         compare();
@@ -651,3 +650,7 @@
 
 </body>
 </html>
+
+
+
+
