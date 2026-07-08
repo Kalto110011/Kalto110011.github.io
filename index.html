@@ -181,7 +181,14 @@
                 </select>
                 <span class="description" id="suspensionDesc">リム上端付近を支点に、ロア側延長時のキャンバー変化として計算します。</span>
             </div>
-            
+            <div class="option-item" style="flex-direction: column; align-items: flex-start;">
+    <label for="baseMode">出面計算結果表示の基準</label>
+    <select id="baseMode">
+        <option value="auto" selected>自動判定（引っ張りタイヤ時はリム基準）</option>
+        <option value="tire">常にタイヤ基準</option>
+        <option value="rim">常にリム基準</option>
+    </select>
+</div>
             <div class="option-item">
                 <input type="checkbox" id="isInchTire">
                 <label for="isInchTire">タイヤサイズをインチ表記にする<span class="description">(例: 31 x 10.5 R 15)</span></label>
@@ -448,7 +455,7 @@
         const c = { j: getNum('curJ'), i: getNum('curInset'), s: getNum('curSpacer'), a: getNum('curCamber'), v1: getNum('curTWidth'), v2: getNum('curTRatio'), v3: getNum('curTInch') };
         const n = { j: getNum('newJ'), i: getNum('newInset'), s: getNum('newSpacer'), a: getNum('newCamber'), v1: getNum('newTWidth'), v2: getNum('newTRatio'), v3: getNum('newTInch') };
         
-        // 追加: サスペンション形式の取得
+        // サスペンション形式の取得
         const suspensionType = document.getElementById('suspensionType').value;
         
         const showHubLine = document.getElementById('showHubLine').checked;
@@ -490,11 +497,12 @@
         const newActualW = (n.j + 1) * 25.4;
         
         // 前後でそれぞれ「引っ張りかどうか」を独立自動判定
-        const isCurStretched = c_tWidth < curActualW;
-        const isNewStretched = n_tWidth < newActualW;
+        const baseMode = document.getElementById('baseMode').value;
+        const isCurStretched = baseMode === 'rim' ? true : baseMode === 'tire' ? false : c_tWidth < curActualW;
+        const isNewStretched = baseMode === 'rim' ? true : baseMode === 'tire' ? false : n_tWidth < newActualW;
 
-        const curBaseName = isCurStretched ? 'リム' : 'タイヤ';
-        const newBaseName = isNewStretched ? 'リム' : 'タイヤ';
+        const curBaseName = isCurStretched ? 'リム' : 'タイヤショルダー';
+        const newBaseName = isNewStretched ? 'リム' : 'タイヤショルダー';
 
         // 各基準ごとの基本距離の計算
         const curLipOutHub = (curActualW / 2) - c.i + c.s;
@@ -578,7 +586,7 @@
         }
     }
 
-    // ★追加: セレクトボックス変更時の説明テキスト変更イベント
+    // セレクトボックス変更時の説明テキスト変更イベント
     document.getElementById('suspensionType').addEventListener('change', function() {
         const descEl = document.getElementById('suspensionDesc');
         switch(this.value) {
@@ -647,6 +655,7 @@
     inputIds.forEach(id => document.getElementById(id).addEventListener('input', compare));
 
     document.getElementById('showHubLine').addEventListener('change', compare);
+    document.getElementById('baseMode').addEventListener('change', compare);
     document.getElementsByName('viewMode').forEach(radio => radio.addEventListener('change', compare));
     
     compare();
