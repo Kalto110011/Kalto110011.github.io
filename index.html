@@ -174,10 +174,9 @@
                 <label for="suspensionType">サスペンション形式 ＆ 調整箇所</label>
                 <select id="suspensionType">
                     <option value="axle">アクスル: ハブ中心</option>
+                    <option value="low" selected>ロアアーム調整（ストラット・マルチリンク共通）</option>
                     <option value="multi_up">マルチリンク: アッパーアーム調整</option>
-                    <option value="multi_low">マルチリンク: ロアアーム調整</option>
-                    <option value="strut_up">ストラット: アッパー側調整</option>
-                    <option value="strut_low" selected>ストラット: ロア側延長</option>
+                    <option value="strut_up">ストラット: アッパーマウント調整</option>
                 </select>
                 <span class="description" id="suspensionDesc">リム上端付近を支点に、ロア側延長時のキャンバー変化として計算します。</span>
             </div>
@@ -268,6 +267,9 @@
         <div class="result-item">
             <div class="result-title"><span>車高の変化（タイヤ半径差）</span><span class="diff-val" id="diffHeight">--</span></div>
         </div>
+        <p style="font-size: 0.75rem; color: #666; margin: 10px 0 0 0; line-height: 1.6;">
+            ※計算結果はあくまで参考値です。車種によってキャンバー角による出面変化量は異なりますので実車への取り付け前に必ずご確認ください。
+        </p>
     </div>
 </div>
 
@@ -370,19 +372,17 @@
         const rimRadius = (wheelInch * 25.4) / 2;
         const knuckleHalfHeight = ((wheelInch - 1) * 25.4) / 2;
 
-        switch(type) {
-            case 'multi_up':
-                return knuckleHalfHeight;
-            case 'multi_low':
-                return -knuckleHalfHeight;
-            case 'strut_up':
-                return rimRadius;
-            case 'strut_low':
-                return -rimRadius;
-            case 'axle':
-            default:
-                return 0;
-        }
+            switch(type) {
+        case 'low':
+        return -knuckleHalfHeight;
+        case 'multi_up':
+        return knuckleHalfHeight;
+        case 'strut_up':
+        return rimRadius;
+        case 'axle':
+        default:
+        return 0;
+    }
     }
 
     function updateViz(id, j, inset, spacer, camber, tWidth, tRatio, inch, isNew, showKnuckle, showLine, suspensionType) {
@@ -595,19 +595,16 @@
         const descEl = document.getElementById('suspensionDesc');
         switch(this.value) {
             case 'axle':
-                descEl.innerText = 'ハブ中心を支点に、タイヤ・ホイール全体がキャンバー角分だけ傾く想定です。';
+                descEl.innerText = 'アクスル加工やキャンバープレートでの調整を想定して、ハブ中心を支点にタイヤ・ホイール全体がキャンバー角分だけ傾く想定です。';
                 break;
             case 'multi_up':
-                descEl.innerText = 'マルチリンクのアッパー側調整想定です。下側寄りを支点にして上側の入り量を大きめに見ます。';
+                descEl.innerText = 'マルチリンクのアッパーアームでの調整想定です。ナックルをホイール－1インチと仮定し、そこの上側を支点として計算します。';
                 break;
-            case 'multi_low':
-                descEl.innerText = 'マルチリンクのロア側調整想定です。上側寄りを支点にしてキャンバー変化を見ます。';
+            case 'low':
+                descEl.innerText = 'ロアアームでの調整想定です。ナックルをホイール－1インチと仮定しそこの下側を支点として計算します。';
                 break;
             case 'strut_up':
-                descEl.innerText = 'ストラットのアッパー側調整想定です。リム下端付近を支点にして計算します。';
-                break;
-            case 'strut_low':
-                descEl.innerText = 'ストラットのロア側延長想定です。リム上端付近を支点にして計算します。';
+                descEl.innerText = 'ストラットのアッパーマウントでの調整想定です。リム下端付近を支点にして計算します。';
                 break;
         }
         compare();
