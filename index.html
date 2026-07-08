@@ -184,7 +184,7 @@
             <div class="option-item" style="flex-direction: column; align-items: flex-start;">
     <label for="baseMode">出面計算結果表示の基準</label>
     <select id="baseMode">
-        <option value="auto" selected>自動判定（引っ張りタイヤ時はリム基準）</option>
+        <option value="auto" selected>自動判定</option>
         <option value="tire">常にタイヤ基準</option>
         <option value="rim">常にリム基準</option>
     </select>
@@ -235,7 +235,7 @@
         </div>
         
         <div class="column new-spec">
-            <div class="column-title" style="color: var(--new-spec-color);">🔸 変更案</div>
+            <div class="column-title" style="color: var(--new-spec-color);">🔸 変更後</div>
             <div class="input-group"><label>J数</label><input type="text" id="newJ" value="10.0"></div>
             <div class="input-group"><label>インセット</label><input type="text" id="newInset" value="20"></div>
             <div class="input-group"><label>スペーサー</label><input type="text" id="newSpacer" value="0"></div>
@@ -522,7 +522,7 @@
 
         let curFinalOut, curFinalIn, newFinalOut, newFinalIn;
 
-        // ★追加: 5つのサスペンション形式ごとの支点ロジック
+        // 5つのサスペンション形式ごとの支点ロジック
         // 支点がどこにあるかで、キャンバー角(a)をつけた時の「アウター/インナーの出幅(変位量)」の計算式が変わります。
         
         function calculateOffset(baseOut, baseIn, radius, camberAngle, type, wheelInch) {
@@ -558,9 +558,14 @@
         const diffHeight = (n_dia - c_dia) / 2;
 
         // リザルトパネルのタイトルに動的なオート判定基準を表示
+        const baseMode = document.getElementById('baseMode').value;
+        if (baseMode === 'auto') {
         document.getElementById('textOuterTitle').innerText = `アウター側 [前:${curBaseName} ➡️ 後:${newBaseName}]`;
         document.getElementById('textInnerTitle').innerText = `インナー側 [前:${curBaseName} ➡️ 後:${newBaseName}]`;
-
+} else {
+        document.getElementById('textOuterTitle').innerText = `アウター側`;
+        document.getElementById('textInnerTitle').innerText = `インナー側`;
+}
         const outEl = document.getElementById('diffOuter');
         const absOutEl = document.getElementById('absOuter');
         outEl.innerText = diffOut >= 0 ? `+ ${diffOut.toFixed(1)} mm 外へ` : `- ${Math.abs(diffOut).toFixed(1)} mm 内へ`;
